@@ -1,0 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 97%;
+    --foreground: 0 0% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    --primary: 0 78% 52%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 5% 92%;
+    --secondary-foreground: 0 0% 20%;
+
+    --muted: 0 5% 94%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 0 78% 52%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 5% 88%;
+    --input: 0 5% 88%;
+    --ring: 0 78% 52%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 20%;
+    --sidebar-primary: 0 78% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 5% 94%;
+    --sidebar-accent-foreground: 0 0% 20%;
+    --sidebar-border: 0 5% 90%;
+    --sidebar-ring: 0 78% 52%;
+
+    /* Custom tokens */
+    --success: 142 60% 40%;
+    --warning: 36 90% 55%;
+    --danger: 0 72% 51%;
+    --revenue: 142 70% 35%;
+    --gold: 43 74% 49%;
+
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .dark {
+    --background: 0 0% 6%;
+    --foreground: 0 0% 92%;
+
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 92%;
+
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 92%;
+
+    --primary: 0 78% 52%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 5% 15%;
+    --secondary-foreground: 0 0% 75%;
+
+    --muted: 0 5% 14%;
+    --muted-foreground: 0 0% 50%;
+
+    --accent: 0 78% 52%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 5% 18%;
+    --input: 0 5% 18%;
+    --ring: 0 78% 52%;
+
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 75%;
+    --sidebar-primary: 0 78% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 5% 14%;
+    --sidebar-accent-foreground: 0 0% 75%;
+    --sidebar-border: 0 5% 16%;
+    --sidebar-ring: 0 78% 52%;
+
+    --success: 142 60% 40%;
+    --warning: 36 90% 55%;
+    --danger: 0 72% 51%;
+    --revenue: 142 70% 45%;
+    --gold: 43 74% 49%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    transition: background-color 0.8s ease-in-out, color 0.8s ease-in-out;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Playfair Display', serif;
+  }
+
+  /* Remove spin buttons from number inputs */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-md border border-border/50 shadow-sm;
+  }
+
+  .dark .glass-card {
+    @apply bg-card/60;
+  }
+
+  .glow-red {
+    box-shadow: 0 0 30px -5px hsl(0 78% 52% / 0.12);
+  }
+
+  .dark .glow-red {
+    box-shadow: 0 0 30px -5px hsl(0 78% 52% / 0.2);
+  }
+
+  .text-gradient-red {
+    background: linear-gradient(135deg, hsl(0, 78%, 55%), hsl(10, 90%, 60%), hsl(0, 78%, 48%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(135deg, hsl(43, 74%, 49%), hsl(50, 90%, 60%), hsl(35, 80%, 45%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .border-gold {
+    border-color: hsl(43, 74%, 49% / 0.5);
+  }
+}
