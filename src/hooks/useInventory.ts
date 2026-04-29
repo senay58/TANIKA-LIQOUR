@@ -19,7 +19,12 @@ export function useAddCategory() {
     return useMutation({
         mutationFn: async ({ name, emoji }: { name: string; emoji: string }) => {
             const { data, error } = await supabase.from('categories').insert([{ name, emoji }]).select().single();
-            if (error) throw error;
+            if (error) {
+                if (error.code === '23505') {
+                    throw new Error(`Category '${name}' already exists.`);
+                }
+                throw new Error(error.message || "Failed to add category");
+            }
             return data;
         },
         onSuccess: () => {
@@ -81,21 +86,28 @@ export function useSaveProduct() {
     return useMutation({
         mutationFn: async (productData: Partial<Product> & { id?: string }) => {
             // First, get the category ID
-            const { data: catData } = await supabase
-                .from('categories')
-                .select('id')
-                .eq('name', productData.category)
-                .single();
+            let catId = null;
+            if (productData.category && productData.category !== 'Uncategorized') {
+                const { data: catData, error: catError } = await supabase
+                    .from('categories')
+                    .select('id')
+                    .eq('name', productData.category)
+                    .maybeSingle();
+
+                if (catData) {
+                    catId = catData.id;
+                }
+            }
 
             const payload = {
                 name: productData.name,
-                category_id: catData?.id,
+                category_id: catId,
                 brand: productData.brand,
-                price_in: productData.priceIn,
-                price_out: productData.priceOut,
-                quantity: productData.quantity,
-                min_stock: productData.minStock,
-                volume: productData.volume,
+                price_in: Number(productData.priceIn) || 0,
+                price_out: Number(productData.priceOut) || 0,
+                quantity: Number(productData.quantity) || 0,
+                min_stock: Number(productData.minStock) || 0,
+                volume: productData.volume || '750ml',
             };
 
             if (productData.id && !productData.id.startsWith('draft-')) {
@@ -106,7 +118,7 @@ export function useSaveProduct() {
                     .eq('id', productData.id)
                     .select()
                     .single();
-                if (error) throw error;
+                if (error) throw new Error(error.message);
                 return data;
             } else {
                 // Insert
@@ -115,7 +127,7 @@ export function useSaveProduct() {
                     .insert([payload])
                     .select()
                     .single();
-                if (error) throw error;
+                if (error) throw new Error(error.message);
                 return data;
             }
         },

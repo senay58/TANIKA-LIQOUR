@@ -30,9 +30,9 @@ export function AddCategoryDialog({ open, onOpenChange }: AddCategoryDialogProps
             toast.success(`Category '${name}' added`);
             setName("");
             setEmoji("");
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
-            toast.error("Failed to add category");
+            toast.error(error.message || "Failed to add category");
         }
     };
 

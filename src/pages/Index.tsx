@@ -58,8 +58,8 @@ const Index = () => {
       await saveProductMutation.mutateAsync(data);
       toast({ title: data.id ? "Product updated" : "Product added", description: `${data.name} has been saved.` });
       setProductDialogOpen(false);
-    } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: "Failed to save product" });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message || "Failed to save product" });
     }
   };
 
@@ -122,9 +122,7 @@ const Index = () => {
             >
               <LogOut className="h-5 w-5" />
             </Button>
-            <div className="rounded-full bg-slate-950/90 backdrop-blur-xl border border-white/30 p-1 shadow-[0_0_15px_rgba(0,0,0,0.5)]">
-                <ThemeToggle />
-            </div>
+            <ThemeToggle className="rounded-full bg-slate-950/90 backdrop-blur-xl border-white/30 h-10 w-10 text-white hover:bg-slate-900 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] active:scale-95" />
           </div>
         </div>
       </div>

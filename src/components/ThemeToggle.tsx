@@ -3,14 +3,14 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
 
   return (
     <Button
       variant="outline"
       size="icon"
-      className="rounded-full bg-background/50 backdrop-blur-md border border-border/50 hover:bg-background/80 relative overflow-hidden h-10 w-10"
+      className={className || "rounded-full bg-background/50 backdrop-blur-md border border-border/50 hover:bg-background/80 relative overflow-hidden h-10 w-10"}
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
     >
       <AnimatePresence mode="wait" initial={false}>
