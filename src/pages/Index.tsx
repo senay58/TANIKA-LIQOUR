@@ -94,16 +94,16 @@ const Index = () => {
           className="w-full h-full object-cover opacity-100 brightness-[1.25] contrast-[1.2] saturate-[1.4]" 
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
-        <div className="absolute inset-0 flex items-center justify-between px-6 md:px-12">
-            <div className="bg-black/40 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-red-500/30 shadow-[0_0_50px_rgba(239,68,68,0.3)] hover:shadow-[0_0_70px_rgba(239,68,68,0.5)] transition-shadow duration-500">
-              <h1 className="text-4xl md:text-6xl font-display font-black text-white drop-shadow-[0_0_30px_rgba(239,68,68,1)] tracking-tighter animate-in zoom-in duration-500">
+        <div className="absolute inset-0 flex flex-col sm:flex-row items-center justify-center sm:justify-between px-6 md:px-12">
+            <div className="bg-black/40 backdrop-blur-xl p-4 md:p-8 rounded-3xl border border-red-500/30 shadow-[0_0_50px_rgba(239,68,68,0.3)] hover:shadow-[0_0_70px_rgba(239,68,68,0.5)] transition-shadow duration-500 text-center sm:text-left">
+              <h1 className="text-3xl md:text-6xl font-display font-black text-white drop-shadow-[0_0_30px_rgba(239,68,68,1)] tracking-tighter animate-in zoom-in duration-500">
                 TANIKA <span className="text-red-500">LIQUOR</span>
               </h1>
-              <p className="text-white/90 font-bold drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] mt-3 text-sm md:text-xl tracking-[0.2em] uppercase text-center bg-red-600/20 py-1 rounded-full border border-red-500/20">
+              <p className="text-white/90 font-bold drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] mt-2 md:mt-3 text-[10px] md:text-xl tracking-[0.1em] md:tracking-[0.2em] uppercase text-center bg-red-600/20 py-1 rounded-full border border-red-500/20">
                 Inventory & Sales Management
               </p>
             </div>
-          <div className="flex items-center gap-3">
+          <div className="absolute top-4 right-4 sm:relative sm:top-0 sm:right-0 flex items-center gap-2 sm:gap-3">
             <Button 
                 variant="outline" 
                 size="icon" 
