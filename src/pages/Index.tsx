@@ -88,65 +88,85 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Hero Header */}
       <div className="relative h-44 md:h-52 overflow-hidden">
-        <img src={heroBanner} alt="Liquor shelf" className="w-full h-full object-cover opacity-30 dark:opacity-20" />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/30 to-background" />
+        <img 
+          src={heroBanner} 
+          alt="Liquor shelf" 
+          className="w-full h-full object-cover opacity-100 brightness-[1.25] contrast-[1.2] saturate-[1.4]" 
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
         <div className="absolute inset-0 flex items-center justify-between px-6 md:px-12">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-display font-bold text-gradient-red">
-              TANIKA LIQOUR
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm md:text-base">
-              Inventory & Sales Management
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => setSettingsOpen(true)} className="rounded-full bg-background/50 backdrop-blur-md border-border/50 h-10 w-10 text-muted-foreground hover:text-foreground">
+            <div className="bg-black/40 backdrop-blur-xl p-6 md:p-8 rounded-3xl border border-red-500/30 shadow-[0_0_50px_rgba(239,68,68,0.3)] hover:shadow-[0_0_70px_rgba(239,68,68,0.5)] transition-shadow duration-500">
+              <h1 className="text-4xl md:text-6xl font-display font-black text-white drop-shadow-[0_0_30px_rgba(239,68,68,1)] tracking-tighter animate-in zoom-in duration-500">
+                TANIKA <span className="text-red-500">LIQUOR</span>
+              </h1>
+              <p className="text-white/90 font-bold drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] mt-3 text-sm md:text-xl tracking-[0.2em] uppercase text-center bg-red-600/20 py-1 rounded-full border border-red-500/20">
+                Inventory & Sales Management
+              </p>
+            </div>
+          <div className="flex items-center gap-3">
+            <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={() => setSettingsOpen(true)} 
+                className="rounded-full bg-slate-950/90 backdrop-blur-xl border-white/30 h-10 w-10 text-white hover:bg-slate-900 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] active:scale-95"
+                title="Settings"
+            >
               <Settings className="h-5 w-5" />
             </Button>
-            <Button variant="outline" size="icon" onClick={logout} className="rounded-full bg-background/50 backdrop-blur-md border-border/50 h-10 w-10 text-muted-foreground hover:text-destructive">
+            <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={logout} 
+                className="rounded-full bg-slate-950/90 backdrop-blur-xl border-white/30 h-10 w-10 text-white hover:text-red-400 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] active:scale-95"
+                title="Logout"
+            >
               <LogOut className="h-5 w-5" />
             </Button>
-            <ThemeToggle />
+            <div className="rounded-full bg-slate-950/90 backdrop-blur-xl border border-white/30 p-1 shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                <ThemeToggle />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-6 relative z-10 pb-12 space-y-5">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-8 relative z-20 pb-12 space-y-6">
         <StatsCards products={products} />
 
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div className="relative w-full sm:w-72 flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between bg-card/60 backdrop-blur-xl p-4 rounded-3xl border border-border/50 shadow-2xl ring-1 ring-white/5">
+          <div className="relative w-full lg:w-96 group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
             <Input
-              placeholder="Search products..."
+              placeholder="Search by name or brand..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 bg-secondary border-border"
+              className="pl-9 bg-background/50 border-border focus:ring-primary h-11 rounded-xl transition-all"
             />
           </div>
-          <div className="flex flex-wrap gap-2 shrink-0">
-            <Button variant="outline" onClick={() => setCartOpen(true)} className="relative border-primary text-primary hover:bg-primary/10">
+          
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setCartOpen(true)} className="relative border-primary/50 text-primary hover:bg-primary/10 h-11 rounded-xl font-bold">
               <ShoppingCart className="h-4 w-4 mr-2" />
               Cart
               {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center animate-bounce shadow-lg ring-2 ring-background">
                   {cartCount}
                 </span>
               )}
             </Button>
-            <Button variant="outline" onClick={() => setHistoryOpen(true)}>
+            <Button variant="outline" onClick={() => setHistoryOpen(true)} className="h-11 rounded-xl">
               <ReceiptText className="h-4 w-4 mr-2" />
               History
             </Button>
-            <Button variant="outline" onClick={() => setViewMode(v => v === "table" ? "grid" : "table")} className="w-10 px-0">
+            <Button variant="outline" onClick={() => setCategoryDialogOpen(true)} className="h-11 rounded-xl">
+              <Tag className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Categories</span>
+              <span className="sm:hidden text-xs">Cats</span>
+            </Button>
+            <Button variant="outline" onClick={() => setViewMode(v => v === "table" ? "grid" : "table")} className="h-11 px-3 rounded-xl">
               {viewMode === "table" ? <div className="grid grid-cols-2 gap-[2px] w-4 h-4"><div className="bg-current rounded-[1px]" /><div className="bg-current rounded-[1px]" /><div className="bg-current rounded-[1px]" /><div className="bg-current rounded-[1px]" /></div> : <div className="flex flex-col gap-[2px] w-4 h-4"><div className="bg-current h-[3px] w-full rounded-[1px]" /><div className="bg-current h-[3px] w-full rounded-[1px]" /><div className="bg-current h-[3px] w-full rounded-[1px]" /></div>}
             </Button>
-            <Button variant="outline" onClick={() => setCategoryDialogOpen(true)}>
-              <Tag className="h-4 w-4 mr-2" />
-              Add Category
-            </Button>
-            <Button onClick={() => { setEditingProduct(null); setProductDialogOpen(true); }}>
+            <Button onClick={() => { setEditingProduct(null); setProductDialogOpen(true); }} className="col-span-2 sm:col-auto h-11 rounded-xl shadow-lg shadow-primary/30 font-bold bg-primary hover:bg-primary/90">
               <Plus className="h-4 w-4 mr-2" />
               Add Product
             </Button>

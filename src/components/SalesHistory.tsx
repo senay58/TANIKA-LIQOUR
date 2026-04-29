@@ -1,12 +1,12 @@
 import { useState, useMemo } from "react";
 import { format, isSameDay } from "date-fns";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { useSalesHistory, useUndoSale, useProducts, useImportSalesCSV } from "@/hooks/useInventory";
+import { useSalesHistory, useUndoSale, useProducts } from "@/hooks/useInventory";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Undo2, ReceiptText, CalendarIcon, Download, Upload, X } from "lucide-react";
+import { Undo2, ReceiptText, CalendarIcon, Download, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import fileDownload from "js-file-download";
 import { toast } from "sonner";
@@ -22,7 +22,6 @@ export function SalesHistory({ open, onOpenChange }: SalesHistoryProps) {
     const { data: sales = [], isLoading } = useSalesHistory();
     const { data: products = [] } = useProducts();
     const undoSaleMutation = useUndoSale();
-    const importMutation = useImportSalesCSV();
     const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
 
     const filteredSales = useMemo(() => {
@@ -109,55 +108,6 @@ export function SalesHistory({ open, onOpenChange }: SalesHistoryProps) {
         }
     };
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-            try {
-                const csvText = event.target?.result as string;
-                const rows = csvText.split('\n').filter(r => r.trim() !== '');
-                if (rows.length < 2) throw new Error("CSV must have a header and at least one row.");
-
-                // Expected approx format: ProductName, Quantity, Price, Date, Customer, Description
-                const importedData = [];
-                for (let i = 1; i < rows.length; i++) {
-                    const columns = rows[i].split(',').map(c => c.trim().replace(/^"|"$/g, ''));
-                    if (columns.length < 4) continue;
-
-                    const [prodName, qtyStr, priceStr, dateStr, custInfo, descInfo] = columns;
-
-                    const matchedProduct = products.find(p => p.name.toLowerCase() === prodName.toLowerCase());
-                    if (!matchedProduct) continue; // Skip unknown products
-
-                    importedData.push({
-                        product_id: matchedProduct.id,
-                        quantity: parseInt(qtyStr, 10) || 1,
-                        price_at_sale: parseFloat(priceStr) || matchedProduct.priceOut,
-                        sale_date: new Date(dateStr).toISOString() || new Date().toISOString(),
-                        customer_info: custInfo || "",
-                        description: descInfo || "Imported Legacy Data"
-                    });
-                }
-
-                if (importedData.length === 0) {
-                    toast.error("No valid matching products found in CSV to import.");
-                    return;
-                }
-
-                await importMutation.mutateAsync(importedData);
-                toast.success(`Successfully imported ${importedData.length} records!`);
-            } catch (err: any) {
-                console.error(err);
-                toast.error(err.message || "Failed to parse CSV");
-            }
-            // Reset input
-            e.target.value = '';
-        };
-        reader.readAsText(file);
-    };
-
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
@@ -205,21 +155,6 @@ export function SalesHistory({ open, onOpenChange }: SalesHistoryProps) {
                             )}
                             <div className="flex-1" />
                             <div className="flex gap-2 shrink-0">
-                                <div>
-                                    <input
-                                        type="file"
-                                        id="csv-upload"
-                                        className="hidden"
-                                        accept=".csv"
-                                        onChange={handleFileUpload}
-                                    />
-                                    <Button variant="outline" size="sm" className="h-9 relative border-gold text-yellow-700 dark:text-yellow-500 hover:bg-yellow-500/10" asChild>
-                                        <label htmlFor="csv-upload" className="cursor-pointer">
-                                            <Upload className="h-4 w-4 mr-2" />
-                                            Import
-                                        </label>
-                                    </Button>
-                                </div>
                                 <Button variant="secondary" size="sm" onClick={handleDownloadCSV} className="h-9">
                                     <Download className="h-4 w-4 mr-2" />
                                     CSV

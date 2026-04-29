@@ -55,10 +55,10 @@ export function ProductTable({ products, onEdit, onDelete, onSell }: ProductTabl
             <tr className="border-b border-border/50">
               <SortHeader field="name">Product</SortHeader>
               <SortHeader field="category">Category</SortHeader>
-              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Price In</th>
+              <th className="hidden md:table-cell px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Price In</th>
               <SortHeader field="priceOut">Price Out</SortHeader>
               <SortHeader field="quantity">Stock</SortHeader>
-              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
+              <th className="hidden sm:table-cell px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
               <th className="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wider text-muted-foreground">Actions</th>
             </tr>
           </thead>
@@ -81,10 +81,10 @@ export function ProductTable({ products, onEdit, onDelete, onSell }: ProductTabl
                       {product.categoryEmoji || (categoryEmojis as any)[product.category]} {product.category}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-sm text-muted-foreground">ETB {product.priceIn.toFixed(2)}</td>
+                  <td className="hidden md:table-cell px-3 py-3 text-sm text-muted-foreground">ETB {product.priceIn.toFixed(2)}</td>
                   <td className="px-3 py-3 text-sm font-medium">ETB {product.priceOut.toFixed(2)}</td>
                   <td className="px-3 py-3 text-sm font-medium">{product.quantity}</td>
-                  <td className="px-3 py-3">{stockStatus(product)}</td>
+                  <td className="hidden sm:table-cell px-3 py-3">{stockStatus(product)}</td>
                   <td className="px-3 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
                       <Button

@@ -28,6 +28,21 @@ export function useAddCategory() {
     });
 }
 
+export function useDeleteCategory() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: string) => {
+            const { error } = await supabase.from('categories').delete().eq('id', id);
+            if (error) throw error;
+            return id;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+            queryClient.invalidateQueries({ queryKey: ['products'] }); // Invalidate products too as category reference might change
+        },
+    });
+}
+
 // --- Products ---
 export function useProducts() {
     return useQuery({
