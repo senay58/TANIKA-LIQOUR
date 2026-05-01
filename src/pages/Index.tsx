@@ -13,6 +13,7 @@ import { SalesHistory } from "@/components/SalesHistory";
 import { AddCategoryDialog } from "@/components/AddCategoryDialog";
 import { AdminSettingsDialog } from "@/components/AdminSettingsDialog";
 import { CartSheet } from "@/components/CartSheet";
+import { UserMenu } from "@/components/UserMenu";
 import { useAuth } from "@/lib/AuthContext";
 import { useCart } from "@/lib/CartContext";
 import { Product, Category } from "@/lib/inventory-data";
@@ -104,25 +105,7 @@ const Index = () => {
               </p>
             </div>
           <div className="absolute top-4 right-4 sm:relative sm:top-0 sm:right-0 flex items-center gap-2 sm:gap-3">
-            <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={() => setSettingsOpen(true)} 
-                className="rounded-full bg-slate-950/90 backdrop-blur-xl border-white/30 h-10 w-10 text-white hover:bg-slate-900 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] active:scale-95"
-                title="Settings"
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
-            <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={logout} 
-                className="rounded-full bg-slate-950/90 backdrop-blur-xl border-white/30 h-10 w-10 text-white hover:text-red-400 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] active:scale-95"
-                title="Logout"
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
-            <ThemeToggle className="rounded-full bg-slate-950/90 backdrop-blur-xl border-white/30 h-10 w-10 text-white hover:bg-slate-900 transition-all shadow-[0_0_15px_rgba(0,0,0,0.5)] active:scale-95" />
+            <UserMenu onSettingsClick={() => setSettingsOpen(true)} onLogoutClick={logout} />
           </div>
         </div>
       </div>
