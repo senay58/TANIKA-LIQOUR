@@ -5,12 +5,13 @@ import { ShoppingCart, Pencil, Trash2, PackageInfo } from "lucide-react";
 
 interface ProductGridProps {
     products: Product[];
-    onEdit: (product: Product) => void;
-    onDelete: (id: string) => void;
-    onSell: (product: Product) => void;
+    onEdit?: (product: Product) => void;
+    onDelete?: (id: string) => void;
+    onSell?: (product: Product) => void;
+    hidePriceIn?: boolean;
 }
 
-export function ProductGrid({ products, onEdit, onDelete, onSell }: ProductGridProps) {
+export function ProductGrid({ products, onEdit, onDelete, onSell, hidePriceIn = false }: ProductGridProps) {
     const stockStatus = (product: Product) => {
         if (product.quantity === 0) return <Badge variant="destructive">Out of Stock</Badge>;
         if (product.quantity <= product.minStock) return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-600 hover:bg-yellow-500/30">Low Stock</Badge>;
@@ -50,31 +51,41 @@ export function ProductGrid({ products, onEdit, onDelete, onSell }: ProductGridP
                         </div>
 
                         {/* Rollover exact costs (Hover state instead of expanded row) */}
-                        <div className="mt-3 text-xs flex justify-between px-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span className="text-muted-foreground">In: ETB {(product.priceIn * product.quantity).toFixed(0)}</span>
-                            <span className="font-bold text-[hsl(var(--revenue))]">Out: ETB {(product.priceOut * product.quantity).toFixed(0)}</span>
-                        </div>
+                        {!hidePriceIn && (
+                            <div className="mt-3 text-xs flex justify-between px-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-muted-foreground">In: ETB {(product.priceIn * product.quantity).toFixed(0)}</span>
+                                <span className="font-bold text-[hsl(var(--revenue))]">Out: ETB {(product.priceOut * product.quantity).toFixed(0)}</span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Actions Footer */}
                     <div className="p-2 border-t border-border/50 bg-secondary/10 flex justify-between items-center">
-                        <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-foreground" onClick={() => onEdit(product)}>
-                                <Pencil className="h-4 w-4" />
+                        {(onEdit || onDelete) && (
+                            <div className="flex gap-1">
+                                {onEdit && (
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-foreground" onClick={() => onEdit(product)}>
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                )}
+                                {onDelete && (
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => onDelete(product.id)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+                        )}
+                        {onSell && (
+                            <Button
+                                size="sm"
+                                className="h-8 px-3 hover:bg-primary/90 transition-transform active:scale-95 ml-auto"
+                                onClick={() => onSell(product)}
+                                disabled={product.quantity === 0}
+                            >
+                                <ShoppingCart className="h-4 w-4 mr-2" />
+                                Add to Cart
                             </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-destructive" onClick={() => onDelete(product.id)}>
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        <Button
-                            size="sm"
-                            className="h-8 px-3 hover:bg-primary/90 transition-transform active:scale-95"
-                            onClick={() => onSell(product)}
-                            disabled={product.quantity === 0}
-                        >
-                            <ShoppingCart className="h-4 w-4 mr-2" />
-                            Add to Cart
-                        </Button>
+                        )}
                     </div>
                 </div>
             ))}

@@ -133,6 +133,8 @@ export function useSaveProduct() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
+            queryClient.invalidateQueries({ queryKey: ['finance-summary'] });
         },
     });
 }
@@ -166,6 +168,7 @@ export function useSalesHistory() {
             if (error) throw error;
             return data;
         },
+        refetchInterval: 20000,
     });
 }
 
@@ -220,26 +223,43 @@ export function useRecordSale() {
 export function useBulkRecordSale() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async (salesData: Array<{
-            product_id: string;
-            quantity: number;
-            price_at_sale: number;
-            description?: string;
-            customer_info?: string;
-        }>) => {
-            const { data, error } = await supabase.rpc('process_bulk_sales', {
-                sales_data: salesData
+        mutationFn: async ({ salesData, creditInfo }: { 
+            salesData: Array<{
+                product_id: string;
+                quantity: number;
+                price_at_sale: number;
+                description?: string;
+                customer_info?: string;
+                payment_method?: 'cash' | 'bank_transfer';
+                bank_name?: string | null;
+                reference_number?: string | null;
+                salesperson_number?: number;
+            }>,
+            creditInfo?: {
+                customer_name: string;
+                customer_phone?: string;
+                due_date: string;
+            }
+        }) => {
+            // 1. Record Sales and Credits ATOMICALLY via RPC
+            const { data: salesResults, error: salesError } = await supabase.rpc('process_bulk_sales', {
+                sales_data: salesData,
+                credit_info: creditInfo || null
             });
+            if (salesError) throw salesError;
 
-            if (error) throw error;
-            return data;
+            return salesResults;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['products'] });
             queryClient.invalidateQueries({ queryKey: ['sales'] });
+            queryClient.invalidateQueries({ queryKey: ['credits'] });
+            queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
+            queryClient.invalidateQueries({ queryKey: ['finance-summary'] });
         },
     });
 }
+
 
 export function useImportSalesCSV() {
     const queryClient = useQueryClient();
@@ -305,6 +325,87 @@ export function useUndoSale() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['products'] });
             queryClient.invalidateQueries({ queryKey: ['sales'] });
+            queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
         },
+    });
+}
+
+// --- Finance & Credits ---
+
+export function useFinanceSummary() {
+    return useQuery({
+        queryKey: ['finance-summary'],
+        queryFn: async () => {
+            const { data, error } = await supabase.rpc('get_current_cash_balance');
+            if (error) throw error;
+            return { balance: data || 0 };
+        },
+        refetchInterval: 20000,
+    });
+}
+
+export function useCashFlow() {
+    return useQuery({
+        queryKey: ['cash-flow'],
+        queryFn: async () => {
+            const { data, error } = await supabase.from('cash_ledger').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
+            return data;
+        },
+        refetchInterval: 20000,
+    });
+}
+
+export function useCredits() {
+    return useQuery({
+        queryKey: ['credits'],
+        queryFn: async () => {
+            const { data, error } = await supabase.from('credits').select('*').order('due_date', { ascending: true });
+            if (error) throw error;
+            return data;
+        },
+        refetchInterval: 20000,
+    });
+}
+
+export function usePayCredit() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (creditId: string) => {
+            const { data: credit, error: fetchError } = await supabase.from('credits').select('*').eq('id', creditId).single();
+            if (fetchError) throw fetchError;
+
+            // 1. Mark credit as paid
+            const { error: updateError } = await supabase.from('credits').update({ status: 'paid' }).eq('id', creditId);
+            if (updateError) throw updateError;
+
+            // 2. Add to cash ledger
+            const { error: ledgerError } = await supabase.from('cash_ledger').insert([{
+                type: 'credit_payment',
+                amount: credit.amount,
+                description: `Credit payment from ${credit.customer_name}`,
+                reference_id: credit.id
+            }]);
+            if (ledgerError) throw ledgerError;
+
+            return true;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['credits'] });
+            queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
+            queryClient.invalidateQueries({ queryKey: ['finance-summary'] });
+        },
+    });
+}
+
+export function useSalespersonNames() {
+    return useQuery({
+        queryKey: ['salesperson-names'],
+        queryFn: async () => {
+            const { data, error } = await supabase.rpc('get_salesperson_names');
+            if (error) throw error;
+            return data as { sp1: string; sp2: string };
+        },
+        refetchInterval: 60000,
     });
 }

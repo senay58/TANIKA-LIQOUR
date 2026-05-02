@@ -8,7 +8,7 @@ interface ProductTableProps {
   products: Product[];
   onEdit: (product: Product) => void;
   onDelete: (id: string) => void;
-  onSell: (product: Product) => void;
+  onSell?: (product: Product) => void;
 }
 
 type SortField = "name" | "category" | "priceOut" | "quantity";
@@ -87,16 +87,18 @@ export function ProductTable({ products, onEdit, onDelete, onSell }: ProductTabl
                   <td className="hidden sm:table-cell px-3 py-3">{stockStatus(product)}</td>
                   <td className="px-3 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 hover:bg-primary/10 hover:text-primary text-xs"
-                        onClick={() => onSell(product)}
-                        disabled={product.quantity === 0}
-                      >
-                        <ShoppingCart className="h-3 w-3 mr-1" />
-                        Add to Cart
-                      </Button>
+                      {onSell && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 hover:bg-primary/10 hover:text-primary text-xs"
+                          onClick={() => onSell(product)}
+                          disabled={product.quantity === 0}
+                        >
+                          <ShoppingCart className="h-3 w-3 mr-1" />
+                          Add to Cart
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-foreground" onClick={() => onEdit(product)}>
                         <Pencil className="h-4 w-4" />
                       </Button>

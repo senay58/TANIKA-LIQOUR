@@ -109,6 +109,15 @@
   body {
     @apply bg-background text-foreground antialiased;
     transition: background-color 0.8s ease-in-out, color 0.8s ease-in-out;
+    /* Prevent overscroll bounce on iOS */
+    overscroll-behavior: none;
+    /* Smooth scrolling on mobile */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Remove tap highlight on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
   }
 
   h1,

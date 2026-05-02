@@ -1,11 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "./supabase";
 
+export type UserRole = 'admin' | 'sales' | null;
+
 interface AuthContextType {
     isAuthenticated: boolean;
+    role: UserRole;
     username: string | null;
-    login: (username: string, passwordHash: string) => Promise<boolean>;
-    loginWithSecret: (secretCodeHash: string) => Promise<boolean>;
+    login: (username: string, password: string) => Promise<boolean>;
+    loginWithSecret: (secretCode: string) => Promise<boolean>;
+    loginAsSales: (username: string, password: string) => Promise<boolean>;
     logout: () => void;
     isLoading: boolean;
     autoLogoutMinutes: number | null;
@@ -14,19 +18,22 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
     isAuthenticated: false,
+    role: null,
     username: null,
     login: async () => false,
     loginWithSecret: async () => false,
-    logout: () => { },
+    loginAsSales: async () => false,
+    logout: () => {},
     isLoading: true,
     autoLogoutMinutes: null,
-    setAutoLogoutMinutes: () => { },
+    setAutoLogoutMinutes: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+    const [role, setRole] = useState<UserRole>(null);
     const [username, setUsername] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [autoLogoutMinutes, setAutoLogoutMinutesState] = useState<number | null>(null);
@@ -40,66 +47,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    // Check local storage on mount
+    // Restore session from localStorage on mount
     useEffect(() => {
-        const checkAuth = async () => {
-            const storedUser = localStorage.getItem("tanika_admin_user");
-            const sessionToken = localStorage.getItem("tanika_admin_token");
+        const storedUser = localStorage.getItem("tanika_user");
+        const storedToken = localStorage.getItem("tanika_token");
+        const storedRole = localStorage.getItem("tanika_role") as UserRole;
 
-            if (storedUser && sessionToken) {
-                setIsAuthenticated(true);
-                setUsername(storedUser);
-            }
+        if (storedUser && storedToken && storedRole) {
+            setIsAuthenticated(true);
+            setUsername(storedUser);
+            setRole(storedRole);
+        }
 
-            const storedLogout = localStorage.getItem("tanika_auto_logout");
-            if (storedLogout) {
-                setAutoLogoutMinutesState(Number(storedLogout));
-            }
+        const storedLogout = localStorage.getItem("tanika_auto_logout");
+        if (storedLogout) setAutoLogoutMinutesState(Number(storedLogout));
 
-            setIsLoading(false);
-        };
-        checkAuth();
+        setIsLoading(false);
     }, []);
 
-    // Idle Timer Effect
+    // Idle auto-logout timer
     useEffect(() => {
         if (!isAuthenticated || autoLogoutMinutes === null) return;
 
         let timeoutId: NodeJS.Timeout;
-
         const resetTimer = () => {
             clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-                logout();
-            }, autoLogoutMinutes * 60 * 1000);
+            timeoutId = setTimeout(() => logout(), autoLogoutMinutes * 60 * 1000);
         };
 
-        // Set up event listeners for activity
         const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
-        events.forEach(event => document.addEventListener(event, resetTimer));
-
-        // Start the timer initially
+        events.forEach(e => document.addEventListener(e, resetTimer));
         resetTimer();
 
         return () => {
             clearTimeout(timeoutId);
-            events.forEach(event => document.removeEventListener(event, resetTimer));
+            events.forEach(e => document.removeEventListener(e, resetTimer));
         };
     }, [isAuthenticated, autoLogoutMinutes]);
+
+    const persistSession = (user: string, userRole: UserRole) => {
+        setIsAuthenticated(true);
+        setUsername(user);
+        setRole(userRole);
+        localStorage.setItem("tanika_user", user);
+        localStorage.setItem("tanika_token", "session-token-v2");
+        localStorage.setItem("tanika_role", userRole as string);
+    };
 
     const login = async (user: string, pass: string) => {
         try {
             const { data, error } = await supabase.rpc('verify_admin_login', {
                 p_username: user,
-                p_password: pass
+                p_password: pass,
             });
-
             if (data === true && !error) {
-                setIsAuthenticated(true);
-                setUsername(user);
-                // Save "token" (simulation)
-                localStorage.setItem("tanika_admin_user", user);
-                localStorage.setItem("tanika_admin_token", "custom-auth-token-123");
+                persistSession(user, 'admin');
                 return true;
             }
             return false;
@@ -110,17 +112,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const loginWithSecret = async (secret: string) => {
         try {
-            const { data, error } = await supabase.rpc('verify_admin_secret', {
-                p_secret: secret
-            });
-
+            const { data, error } = await supabase.rpc('verify_admin_secret', { p_secret: secret });
             if (data === true && !error) {
-                setIsAuthenticated(true);
-                // Since we don't get the username back from verifying secret, we default to 'admin' 
-                // or we could change the RPC to return the username. For MVP, we'll assume 'admin'.
-                setUsername('admin');
-                localStorage.setItem("tanika_admin_user", 'admin');
-                localStorage.setItem("tanika_admin_token", "custom-auth-token-123");
+                persistSession('admin', 'admin');
+                return true;
+            }
+            return false;
+        } catch {
+            return false;
+        }
+    };
+
+    const loginAsSales = async (user: string, pass: string) => {
+        try {
+            const { data, error } = await supabase.rpc('verify_sales_login', {
+                p_username: user,
+                p_password: pass,
+            });
+            if (data === true && !error) {
+                persistSession(user, 'sales');
                 return true;
             }
             return false;
@@ -132,6 +142,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const logout = () => {
         setIsAuthenticated(false);
         setUsername(null);
+        setRole(null);
+        localStorage.removeItem("tanika_user");
+        localStorage.removeItem("tanika_token");
+        localStorage.removeItem("tanika_role");
+        // Clear old key format too
         localStorage.removeItem("tanika_admin_user");
         localStorage.removeItem("tanika_admin_token");
     };
@@ -139,13 +154,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return (
         <AuthContext.Provider value={{
             isAuthenticated,
+            role,
             username,
             login,
             loginWithSecret,
+            loginAsSales,
             logout,
             isLoading,
             autoLogoutMinutes,
-            setAutoLogoutMinutes
+            setAutoLogoutMinutes,
         }}>
             {children}
         </AuthContext.Provider>
