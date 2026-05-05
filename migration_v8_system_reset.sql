@@ -2,7 +2,7 @@
 -- TANIKA LIQUOR - SYSTEM RESET FUNCTIONALITY
 -- ==============================================================================
 
-CREATE OR REPLACE FUNCTION reset_entire_system(p_password TEXT)
+CREATE OR REPLACE FUNCTION reset_entire_system(p_password TEXT, p_initial_cash NUMERIC DEFAULT 0)
 RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
     is_valid BOOLEAN;
@@ -18,16 +18,17 @@ BEGIN
     END IF;
 
     -- 2. Truncate all data tables (TRUNCATE is faster than DELETE)
-    -- We truncate in an order that respects foreign keys
     TRUNCATE public.credits CASCADE;
     TRUNCATE public.cash_ledger CASCADE;
     TRUNCATE public.sales CASCADE;
     TRUNCATE public.products CASCADE;
     TRUNCATE public.categories CASCADE;
 
-    -- 3. Reset sequences (if any)
-    -- Postgres handles serials automatically with TRUNCATE RESTART IDENTITY, 
-    -- but for UUIDs it doesn't matter.
+    -- 3. Insert initial investment cash if provided
+    IF p_initial_cash > 0 THEN
+        INSERT INTO public.cash_ledger (amount, type, description)
+        VALUES (p_initial_cash, 'in', 'Initial business investment / starting cash after reset');
+    END IF;
 
     RETURN TRUE;
 END; $$;

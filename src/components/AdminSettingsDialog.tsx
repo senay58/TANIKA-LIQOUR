@@ -41,6 +41,7 @@ export function AdminSettingsDialog({ open, onOpenChange }: AdminSettingsDialogP
 
     // System Reset state
     const [resetPasscode, setResetPasscode] = useState("");
+    const [initialCash, setInitialCash] = useState<number | "">("");
     const [isResetting, setIsResetting] = useState(false);
     const queryClient = useQueryClient();
 
@@ -132,12 +133,14 @@ export function AdminSettingsDialog({ open, onOpenChange }: AdminSettingsDialogP
         try {
             const { error } = await supabase.rpc('reset_entire_system', {
                 p_password: resetPasscode,
+                p_initial_cash: initialCash === "" ? 0 : Number(initialCash)
             });
 
             if (error) throw error;
 
             toast.success("System reset successful. All data has been cleared.");
             setResetPasscode("");
+            setInitialCash("");
             
             // Invalidate everything to clear the UI
             queryClient.invalidateQueries();
@@ -332,15 +335,37 @@ export function AdminSettingsDialog({ open, onOpenChange }: AdminSettingsDialogP
                         </div>
 
                         <div className="grid gap-3 pt-2">
-                            <Label htmlFor="reset-passcode">Enter Admin Passcode to Confirm</Label>
-                            <Input
-                                id="reset-passcode"
-                                type="password"
-                                value={resetPasscode}
-                                onChange={e => setResetPasscode(e.target.value)}
-                                placeholder="Your login password"
-                                className="border-destructive/30 focus-visible:ring-destructive"
-                            />
+                            <div>
+                                <Label htmlFor="reset-passcode">Enter Admin Passcode to Confirm</Label>
+                                <Input
+                                    id="reset-passcode"
+                                    type="password"
+                                    value={resetPasscode}
+                                    onChange={e => setResetPasscode(e.target.value)}
+                                    placeholder="Your login password"
+                                    className="border-destructive/30 focus-visible:ring-destructive mt-1"
+                                />
+                            </div>
+
+                            <div className="mt-2">
+                                <Label htmlFor="initial-cash" className="text-primary font-bold">Initial Cash Pile (Optional)</Label>
+                                <p className="text-[10px] text-muted-foreground mb-1.5 leading-tight">
+                                    Enter the amount of cash you are investing to restock inventory so the cash flow doesn't go negative.
+                                </p>
+                                <div className="relative">
+                                    <Wallet className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                    <Input
+                                        id="initial-cash"
+                                        type="number"
+                                        placeholder="e.g. 50000"
+                                        className="pl-9 bg-background/50 border-border/50"
+                                        value={initialCash}
+                                        onChange={(e) => setInitialCash(e.target.value === "" ? "" : Number(e.target.value))}
+                                        min="0"
+                                        step="any"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         <Button
