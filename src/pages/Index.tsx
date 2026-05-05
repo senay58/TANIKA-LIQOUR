@@ -16,6 +16,7 @@ import { SalesHistory } from "@/components/SalesHistory";
 import { AddCategoryDialog } from "@/components/AddCategoryDialog";
 import { AdminSettingsDialog } from "@/components/AdminSettingsDialog";
 import { FinanceDashboard } from "@/components/FinanceDashboard";
+import { InventoryStats } from "@/components/InventoryStats";
 import { useAuth } from "@/lib/AuthContext";
 import { Product } from "@/lib/inventory-data";
 import { useProducts, useSaveProduct, useDeleteProduct, useCategories } from "@/hooks/useInventory";
@@ -261,6 +262,9 @@ const Index = () => {
                         {/* ── INVENTORY ── */}
                         {activeTab === "inventory" && (
                             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-3 duration-300">
+                                
+                                <InventoryStats products={products} categories={categories?.map(c => c.name) || []} />
+
                                 <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-card/60 backdrop-blur-xl p-4 rounded-2xl border border-border/50 shadow-lg">
                                     <div className="relative w-full sm:w-80 group">
                                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
@@ -335,9 +339,9 @@ const Index = () => {
                 </main>
             </div>
 
-            {/* ── MOBILE BOTTOM NAV (floating pill - slim) ── */}
-            <nav className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-                <div className="flex items-center gap-0.5 bg-foreground/90 backdrop-blur-xl rounded-full px-1.5 py-1 shadow-2xl shadow-black/40 border border-white/10">
+            {/* ── MOBILE BOTTOM NAV (floating pill - thick & large) ── */}
+            <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+                <div className="flex items-center gap-2 bg-foreground/95 backdrop-blur-xl rounded-full px-3 py-2 shadow-2xl shadow-black/50 border border-white/10">
                     {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
                         const active = activeTab === id;
                         return (
@@ -346,18 +350,19 @@ const Index = () => {
                                 onClick={() => setActiveTab(id)}
                                 aria-label={label}
                                 className={cn(
-                                    "relative flex items-center justify-center w-9 h-8 rounded-full transition-all duration-200",
+                                    "relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-200",
                                     active
-                                        ? "bg-background text-foreground shadow scale-105"
+                                        ? "bg-background text-foreground shadow-lg scale-110"
                                         : "text-background/60 hover:text-background"
                                 )}
                             >
-                                <Icon className="w-3.5 h-3.5" />
+                                <Icon className="w-6 h-6" strokeWidth={active ? 2.5 : 2} />
                             </button>
                         );
                     })}
                 </div>
             </nav>
+
 
             {/* Dialogs */}
             <ProductFormDialog open={productDialogOpen} onOpenChange={setProductDialogOpen} product={editingProduct} onSave={handleSave} categories={categories} />

@@ -7,7 +7,7 @@ import { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LineChart, Line, CartesianGrid } from "recharts";
 import { SalesHistory } from "@/components/SalesHistory";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -170,16 +170,16 @@ export function ReportsDashboard() {
         <SalesHistory open={true} onOpenChange={() => {}} inline showUndo={true} />
       </div>
 
-      {/* ── Salesperson Performance Graph (Admin only) ── */}
+      {/* ── Total Sales Timeline Chart ── */}
       <div className="bg-card/60 backdrop-blur-sm border border-border rounded-xl p-6 shadow-md">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500">
+            <div className="p-3 bg-purple-500/10 rounded-xl text-purple-500">
               <TrendingUp className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-xl font-display font-bold">Sales Performance</h2>
-              <p className="text-sm text-muted-foreground">Comparative revenue analytics for sales staff.</p>
+              <h2 className="text-xl font-display font-bold">Total Sales Timeline</h2>
+              <p className="text-sm text-muted-foreground">Revenue trends over time.</p>
             </div>
           </div>
           <Select value={graphTimeFrame} onValueChange={(v: any) => setGraphTimeFrame(v)}>
@@ -194,6 +194,44 @@ export function ReportsDashboard() {
             </SelectContent>
           </Select>
         </div>
+
+        <div className="h-[250px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={salesDataBySP /* Need to change this data structure for LineChart! */} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} dy={10} />
+                <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                    tickFormatter={(value) => `ETB ${(value/1000)}k`} 
+                />
+                <Tooltip 
+                  cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '3 3' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                  itemStyle={{ color: 'hsl(var(--foreground))' }}
+                  formatter={(value: number) => [`ETB ${value.toLocaleString()}`, "Revenue"]}
+                />
+                <Line type="monotone" dataKey="revenue" stroke="#CC1111" strokeWidth={3} dot={{ r: 4, fill: "#CC1111" }} activeDot={{ r: 6, fill: "#CC1111", stroke: "white", strokeWidth: 2 }} />
+              </LineChart>
+            </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* ── Salesperson Performance Graph (Admin only) ── */}
+      <div className="bg-card/60 backdrop-blur-sm border border-border rounded-xl p-6 shadow-md mt-6">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500">
+              <TrendingUp className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-xl font-display font-bold">Salesperson Comparison</h2>
+              <p className="text-sm text-muted-foreground">Revenue by staff member.</p>
+            </div>
+          </div>
+        </div>
+
 
         {/* Summary stat pills */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">

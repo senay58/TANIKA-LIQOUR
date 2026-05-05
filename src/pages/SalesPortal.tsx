@@ -351,9 +351,9 @@ const SalesPortal = () => {
                 </main>
             </div>
 
-            {/* ── MOBILE BOTTOM NAV (floating pill - slim) ── */}
-            <nav className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-                <div className="flex items-center gap-0.5 bg-foreground/90 backdrop-blur-xl rounded-full px-1.5 py-1 shadow-2xl shadow-black/40 border border-white/10">
+            {/* ── MOBILE BOTTOM NAV (floating pill - thick & large) ── */}
+            <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+                <div className="flex items-center gap-2 bg-foreground/95 backdrop-blur-xl rounded-full px-3 py-2 shadow-2xl shadow-black/50 border border-white/10">
                     {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
                         const active = activeTab === id;
                         return (
@@ -362,15 +362,15 @@ const SalesPortal = () => {
                                 onClick={() => setActiveTab(id)}
                                 aria-label={label}
                                 className={cn(
-                                    "relative flex items-center justify-center w-9 h-8 rounded-full transition-all duration-200",
+                                    "relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-200",
                                     active
-                                        ? "bg-background text-foreground shadow scale-105"
+                                        ? "bg-background text-foreground shadow-lg scale-110"
                                         : "text-background/60 hover:text-background"
                                 )}
                             >
-                                <Icon className="w-3.5 h-3.5" />
+                                <Icon className="w-6 h-6" strokeWidth={active ? 2.5 : 2} />
                                 {id === "sales_entry" && cartCount > 0 && (
-                                    <span className="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[9px] font-bold h-4 w-4 rounded-full flex items-center justify-center ring-1 ring-background">
+                                    <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center ring-2 ring-background">
                                         {cartCount}
                                     </span>
                                 )}
@@ -379,6 +379,7 @@ const SalesPortal = () => {
                     })}
                 </div>
             </nav>
+
 
             <CartSheet />
         </div>

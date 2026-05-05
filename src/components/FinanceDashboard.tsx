@@ -25,6 +25,31 @@ export function FinanceDashboard() {
     const pendingCredits = credits.filter(c => c.status === 'pending');
     const totalDebt = pendingCredits.reduce((sum, c) => sum + Number(c.amount), 0);
 
+    const now = new Date();
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(now.getDate() + 3);
+
+    const overdue = pendingCredits
+        .filter(c => new Date(c.due_date) < now)
+        .reduce((sum, c) => sum + Number(c.amount), 0);
+        
+    const dueSoon = pendingCredits
+        .filter(c => {
+            const due = new Date(c.due_date);
+            return due >= now && due <= threeDaysFromNow;
+        })
+        .reduce((sum, c) => sum + Number(c.amount), 0);
+
+    const openWhatsAppReminder = (phone: string, name: string, amount: number) => {
+        if (!phone) {
+            toast.error("No phone number recorded for this customer.");
+            return;
+        }
+        const cleanPhone = phone.replace(/\D/g, ''); // basic cleanup
+        const msg = encodeURIComponent(`Hello ${name}, this is a gentle reminder regarding your pending credit of ETB ${amount.toFixed(2)} at Tanika Liquor. Please arrange for payment at your earliest convenience. Thank you!`);
+        window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
+    };
+
     return (
         <div className="space-y-6">
             {/* Top Cards */}
@@ -54,14 +79,23 @@ export function FinanceDashboard() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                             <Clock className="w-4 h-4 text-red-500" />
-                            Total Debt Owed
+                            Outstanding Credits
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-red-500">
+                        <div className="text-3xl font-bold text-red-500 mb-2">
                             ETB {totalDebt.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">From {pendingCredits.length} pending credits</p>
+                        <div className="flex gap-4">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Due Soon</span>
+                                <span className="text-sm font-semibold text-yellow-500">ETB {dueSoon.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Overdue</span>
+                                <span className="text-sm font-semibold text-red-600">ETB {overdue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -107,14 +141,25 @@ export function FinanceDashboard() {
                                                 <Calendar className="w-3 h-3" />
                                                 Due: {format(new Date(credit.due_date), "MMM dd, yyyy")}
                                             </div>
-                                            <Button 
-                                                size="sm" 
-                                                className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white gap-2"
-                                                onClick={() => handlePayCredit(credit.id)}
-                                            >
-                                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                                Mark as Paid
-                                            </Button>
+                                            <div className="flex gap-2">
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="outline"
+                                                    className="h-8 text-xs gap-1"
+                                                    onClick={() => openWhatsAppReminder(credit.customer_phone, credit.customer_name, Number(credit.amount))}
+                                                >
+                                                    <Phone className="w-3.5 h-3.5" />
+                                                    Remind
+                                                </Button>
+                                                <Button 
+                                                    size="sm" 
+                                                    className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white gap-1"
+                                                    onClick={() => handlePayCredit(credit.id)}
+                                                >
+                                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                                    Paid
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))
