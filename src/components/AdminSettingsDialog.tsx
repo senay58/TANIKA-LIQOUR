@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/AuthContext";
 import { toast } from "sonner";
-import { KeyRound, Timer, ShoppingBag, ShieldCheck, RefreshCcw, AlertTriangle } from "lucide-react";
+import { KeyRound, Timer, ShoppingBag, ShieldCheck, RefreshCcw, AlertTriangle, Wallet } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSalespersonNames } from "@/hooks/useInventory";
