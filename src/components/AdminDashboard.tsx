@@ -2,7 +2,7 @@ import { Package, AlertTriangle, DollarSign, Wine, TrendingUp, ShoppingCart, Use
 import { Product } from "@/lib/inventory-data";
 import { useState, useMemo } from "react";
 import { useSalesHistory, useCredits, useFinanceSummary } from "@/hooks/useInventory";
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { Button } from "@/components/ui/button";
 
@@ -36,10 +36,14 @@ export function AdminDashboard({ products, onNavigateToFinance }: AdminDashboard
   const totalCreditAmount = pendingCredits.reduce((sum: any, c: any) => sum + Number(c.amount), 0);
   const numberOfPeopleOwing = pendingCredits.length;
 
+  const todayStart = startOfDay(new Date());
+  const todaySales = useMemo(() => sales.filter((s: any) => !s.is_reversed && new Date(s.sale_date) >= todayStart), [sales]);
+  const todayRevenue = todaySales.reduce((s: number, sale: any) => s + sale.quantity * sale.price_at_sale, 0);
+
   const stats = [
-    { label: "Cash Pile", value: formatCurrency(summary?.balance || 0), icon: Wallet, color: "text-green-500", subtitle: "Real-time liquidity" },
+    { label: "Available Cash", value: formatCurrency(summary?.balance || 0), icon: Wallet, color: "text-green-500", subtitle: "Real-time liquidity" },
+    { label: "Today Sales", value: formatCurrency(todayRevenue), icon: ShoppingCart, color: "text-blue-500", subtitle: "Sales since midnight" },
     { label: "Products / Units", value: `${totalProducts} / ${totalUnits.toLocaleString()}`, icon: Package, color: "text-primary", subtitle: "Current inventory" },
-    { label: "Inv. Cost / Value", value: `${formatCurrency(inventoryValue)} / ${formatCurrency(possibleValue)}`, icon: DollarSign, color: "text-muted-foreground" },
     { label: "Expected Revenue", value: formatCurrency(revenue), icon: TrendingUp, color: "text-[hsl(var(--revenue))]", isClickable: true },
     { label: "Low Stock", value: lowStock, icon: AlertTriangle, color: lowStock > 0 ? "text-destructive" : "text-success", subtitle: "Products needing restock" },
   ];

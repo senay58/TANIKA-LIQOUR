@@ -99,40 +99,13 @@ export function InventoryStats({ products, categories }: InventoryStatsProps) {
         )}
       </div>
 
-      {/* ── Row 2: Cash + Inventory Value ── */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-green-500/10 border border-green-500/25 rounded-xl p-3 shadow-sm">
-          <div className="flex items-center gap-1.5 mb-1">
-            <Wallet className="w-3.5 h-3.5 text-green-500 shrink-0" />
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Cash Available</span>
-          </div>
-          <p className="text-lg font-black text-green-500 leading-tight">{fmt(summary?.balance ?? 0)}</p>
+      {/* ── Row 2: Inventory Value ── */}
+      <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 shadow-sm">
+        <div className="flex items-center gap-1.5 mb-1">
+          <DollarSign className="w-3.5 h-3.5 text-primary shrink-0" />
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Inventory Val.</span>
         </div>
-        <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 shadow-sm">
-          <div className="flex items-center gap-1.5 mb-1">
-            <DollarSign className="w-3.5 h-3.5 text-primary shrink-0" />
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Inventory Val.</span>
-          </div>
-          <p className="text-lg font-black text-primary leading-tight">{fmt(inventoryValue)}</p>
-        </div>
-      </div>
-
-      {/* ── Row 3: Today Sales + Today Profit ── */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 shadow-sm">
-          <div className="flex items-center gap-1.5 mb-1">
-            <ShoppingCart className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Today Sales</span>
-          </div>
-          <p className="text-lg font-black text-blue-500 leading-tight">{fmt(todayRevenue)}</p>
-        </div>
-        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 shadow-sm">
-          <div className="flex items-center gap-1.5 mb-1">
-            <TrendingUp className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Profit Today</span>
-          </div>
-          <p className="text-lg font-black text-yellow-500 leading-tight">{fmt(todayProfit)}</p>
-        </div>
+        <p className="text-lg font-black text-primary leading-tight">{fmt(inventoryValue)}</p>
       </div>
 
     </div>

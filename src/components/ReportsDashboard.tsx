@@ -170,53 +170,6 @@ export function ReportsDashboard() {
         <SalesHistory open={true} onOpenChange={() => {}} inline showUndo={true} />
       </div>
 
-      {/* ── Total Sales Timeline Chart ── */}
-      <div className="bg-card/60 backdrop-blur-sm border border-border rounded-xl p-6 shadow-md">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-purple-500/10 rounded-xl text-purple-500">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-xl font-display font-bold">Total Sales Timeline</h2>
-              <p className="text-sm text-muted-foreground">Revenue trends over time.</p>
-            </div>
-          </div>
-          <Select value={graphTimeFrame} onValueChange={(v: any) => setGraphTimeFrame(v)}>
-            <SelectTrigger className="w-[140px] h-9 text-xs bg-background/50">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="today">Today</SelectItem>
-              <SelectItem value="week">This Week</SelectItem>
-              <SelectItem value="month">This Month</SelectItem>
-              <SelectItem value="all">All Time</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="h-[250px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={salesDataBySP /* Need to change this data structure for LineChart! */} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} dy={10} />
-                <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                    tickFormatter={(value) => `ETB ${(value/1000)}k`} 
-                />
-                <Tooltip 
-                  cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '3 3' }}
-                  contentStyle={{ backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
-                  itemStyle={{ color: 'hsl(var(--foreground))' }}
-                  formatter={(value: number) => [`ETB ${value.toLocaleString()}`, "Revenue"]}
-                />
-                <Line type="monotone" dataKey="revenue" stroke="#CC1111" strokeWidth={3} dot={{ r: 4, fill: "#CC1111" }} activeDot={{ r: 6, fill: "#CC1111", stroke: "white", strokeWidth: 2 }} />
-              </LineChart>
-            </ResponsiveContainer>
-        </div>
-      </div>
 
       {/* ── Salesperson Performance Graph (Admin only) ── */}
       <div className="bg-card/60 backdrop-blur-sm border border-border rounded-xl p-6 shadow-md mt-6">
