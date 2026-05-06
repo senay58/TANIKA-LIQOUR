@@ -168,7 +168,7 @@ const Index = () => {
             <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
                 {/* Top Bar */}
-                <header className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-border/50 bg-background/80 backdrop-blur-xl shrink-0">
+                <header className="hidden md:flex items-center justify-between px-4 md:px-6 py-3 border-b border-border/50 bg-background/80 backdrop-blur-xl shrink-0">
                     <div className="flex items-center gap-3">
                         {/* Mobile brand - stacked TANIKA / liquor */}
                         <div className="flex items-center gap-2 md:hidden">
@@ -259,7 +259,7 @@ const Index = () => {
                         </div>
                     </div>
 
-                    <div className="p-4 md:p-6 space-y-6">
+                    <div className="px-4 md:px-6 pb-6 pt-2 md:pt-6 space-y-4 md:space-y-6">
 
                         {/* ── INVENTORY ── */}
                         {activeTab === "inventory" && (

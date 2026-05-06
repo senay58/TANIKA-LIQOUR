@@ -22,13 +22,11 @@ export function AdminSettingsDialog({ open, onOpenChange }: AdminSettingsDialogP
     const { username, logout, autoLogoutMinutes, setAutoLogoutMinutes } = useAuth();
 
     // Admin credentials state
-    const [newUsername, setNewUsername] = useState(username || "");
     const [newPassword, setNewPassword] = useState("");
     const [newSecret, setNewSecret] = useState("");
     const [isUpdatingAdmin, setIsUpdatingAdmin] = useState(false);
 
     // Sales credentials state
-    const [salesUsername, setSalesUsername] = useState("sales");
     const [salesPassword, setSalesPassword] = useState("");
     const [salesPasswordConfirm, setSalesPasswordConfirm] = useState("");
     const [isUpdatingSales, setIsUpdatingSales] = useState(false);
@@ -53,14 +51,14 @@ export function AdminSettingsDialog({ open, onOpenChange }: AdminSettingsDialogP
     }, [salespersonNames]);
 
     const handleUpdateAdmin = async () => {
-        if (!newUsername.trim() || !newPassword.trim() || !newSecret.trim()) {
+        if (!newPassword.trim() || !newSecret.trim()) {
             toast.error("All admin credential fields are required.");
             return;
         }
         setIsUpdatingAdmin(true);
         try {
             const { error } = await supabase.rpc('update_admin_credentials', {
-                p_username: newUsername,
+                p_username: "admin",
                 p_password: newPassword,
                 p_secret: newSecret,
             });
@@ -76,8 +74,8 @@ export function AdminSettingsDialog({ open, onOpenChange }: AdminSettingsDialogP
     };
 
     const handleUpdateSales = async () => {
-        if (!salesUsername.trim() || !salesPassword.trim()) {
-            toast.error("Sales username and password are required.");
+        if (!salesPassword.trim()) {
+            toast.error("Sales password is required.");
             return;
         }
         if (salesPassword !== salesPasswordConfirm) {
@@ -88,10 +86,10 @@ export function AdminSettingsDialog({ open, onOpenChange }: AdminSettingsDialogP
         try {
             const { error } = await supabase.rpc('update_sales_credentials', {
                 p_password: salesPassword,
-                p_username: salesUsername,
+                p_username: "sales",
             });
             if (error) throw error;
-            toast.success(`Sales staff credentials updated. New login: "${salesUsername}"`);
+            toast.success(`Sales staff password updated.`);
             setSalesPassword("");
             setSalesPasswordConfirm("");
         } catch (err: any) {
@@ -191,15 +189,6 @@ export function AdminSettingsDialog({ open, onOpenChange }: AdminSettingsDialogP
                             ⚠️ Updating admin credentials will log you out immediately.
                         </p>
                         <div className="grid gap-2">
-                            <Label htmlFor="admin-username">Admin Username</Label>
-                            <Input
-                                id="admin-username"
-                                value={newUsername}
-                                onChange={e => setNewUsername(e.target.value)}
-                                placeholder="admin"
-                            />
-                        </div>
-                        <div className="grid gap-2">
                             <Label htmlFor="admin-password">New Password</Label>
                             <Input
                                 id="admin-password"
@@ -235,17 +224,8 @@ export function AdminSettingsDialog({ open, onOpenChange }: AdminSettingsDialogP
                     {/* ─── Sales Staff Credentials ─── */}
                     <TabsContent value="sales" className="space-y-4 pt-4 overflow-y-auto flex-1 px-0.5">
                         <p className="text-xs text-muted-foreground bg-secondary/50 p-3 rounded-lg">
-                            Set the username and password that sales staff use to log into the Sales Portal. Any currently logged-in sales session will be invalidated on their next login attempt.
+                            Set the password that sales staff use to log into the Sales Portal. Any currently logged-in sales session will be invalidated on their next login attempt.
                         </p>
-                        <div className="grid gap-2">
-                            <Label htmlFor="sales-username">Sales Staff Username</Label>
-                            <Input
-                                id="sales-username"
-                                value={salesUsername}
-                                onChange={e => setSalesUsername(e.target.value)}
-                                placeholder="sales"
-                            />
-                        </div>
                         <div className="grid gap-2">
                             <Label htmlFor="sales-password">New Password</Label>
                             <Input

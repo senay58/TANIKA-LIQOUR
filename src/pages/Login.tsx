@@ -36,9 +36,9 @@ export default function Login() {
             if (mode === "admin-secret") {
                 success = await loginWithSecret(secretCode);
             } else if (mode === "admin") {
-                success = await login(username, password);
+                success = await login("admin", password);
             } else {
-                success = await loginAsSales(username, password);
+                success = await loginAsSales("sales", password);
             }
 
             if (success) {
@@ -101,11 +101,11 @@ export default function Login() {
 
                     {/* Logo */}
                     <div className="flex flex-col items-center mb-8">
-                        <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary">
-                            <Wine className="h-8 w-8" />
+                        <div className="h-24 w-24 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary">
+                            <Wine className="h-12 w-12" />
                         </div>
-                        <h1 className="text-2xl font-display font-bold text-center tracking-wide">
-                            TANIKA {isSalesMode ? <span className="text-primary">SALES</span> : <span className="text-primary">SECURE</span>}
+                        <h1 className="text-4xl font-display font-bold text-center tracking-wide">
+                            TANIKA {isSalesMode ? <span className="text-primary">SALES</span> : <span className="text-primary">ADMIN</span>}
                         </h1>
                         <p className="text-sm text-muted-foreground mt-1">
                             {isSalesMode ? "Sales Staff Authentication" : "Admin Portal Authentication"}
@@ -131,20 +131,6 @@ export default function Login() {
                             </div>
                         ) : (
                             <div className="space-y-4 animate-in fade-in">
-                                <div className="space-y-2">
-                                    <Label htmlFor="username">{isSalesMode ? "Staff Username" : "Admin Username"}</Label>
-                                    <div className="relative">
-                                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            id="username"
-                                            className="pl-9 bg-secondary border-border"
-                                            placeholder={isSalesMode ? "sales" : "admin"}
-                                            value={username}
-                                            onChange={(e) => setUsername(e.target.value)}
-                                            required
-                                        />
-                                    </div>
-                                </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="password">Password</Label>
                                     <div className="relative">

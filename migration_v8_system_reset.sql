@@ -27,7 +27,7 @@ BEGIN
     -- 3. Insert initial investment cash if provided
     IF p_initial_cash > 0 THEN
         INSERT INTO public.cash_ledger (amount, type, description)
-        VALUES (p_initial_cash, 'adjustment', 'Initial business investment / starting cash after reset');
+        VALUES (p_initial_cash, 'sale', 'Initial business investment / starting cash after reset');
     END IF;
 
     RETURN TRUE;
