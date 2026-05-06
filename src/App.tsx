@@ -49,7 +49,7 @@ const App = () => (
             <TooltipProvider>
                 <AuthProvider>
                     <Toaster />
-                    <Sonner />
+                    <Sonner position="top-center" richColors theme="dark" />
                     <BrowserRouter>
                         <Routes>
                             {/* Admin dashboard */}

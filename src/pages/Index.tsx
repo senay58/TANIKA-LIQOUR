@@ -195,15 +195,17 @@ const Index = () => {
                             </span>
                         </div>
                     </div>
+                </header>
 
-                    {/* Profile Button (mobile + desktop) */}
+                {/* Floating Profile Button (mobile + desktop) */}
+                <div className="fixed top-4 right-4 z-[60]">
                     <Popover open={profileOpen} onOpenChange={setProfileOpen}>
                         <PopoverTrigger asChild>
-                            <button className="flex items-center gap-2 h-9 w-9 rounded-full bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all justify-center shadow-sm">
-                                <User className="w-4 h-4 text-primary" />
+                            <button className="flex items-center justify-center w-10 h-10 rounded-full bg-black/50 backdrop-blur-xl border border-white/10 hover:bg-black/70 transition-all shadow-xl ring-1 ring-black/50">
+                                <User className="w-5 h-5 text-white" />
                             </button>
                         </PopoverTrigger>
-                        <PopoverContent align="end" className="w-56 p-2 rounded-2xl shadow-2xl bg-popover/95 backdrop-blur-xl border-border">
+                        <PopoverContent align="end" className="w-56 p-2 rounded-2xl shadow-2xl bg-popover/95 backdrop-blur-xl border-border mt-2">
                             <div className="px-3 py-2 border-b border-border/50 mb-1">
                                 <p className="text-xs font-bold text-foreground">{username}</p>
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Admin</p>
@@ -237,7 +239,7 @@ const Index = () => {
                             </button>
                         </PopoverContent>
                     </Popover>
-                </header>
+                </div>
 
                 {/* Scrollable content */}
                 <main className="flex-1 overflow-y-auto pb-28 md:pb-6">

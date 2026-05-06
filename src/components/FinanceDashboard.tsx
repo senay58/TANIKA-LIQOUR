@@ -45,7 +45,15 @@ export function FinanceDashboard() {
             toast.error("No phone number recorded for this customer.");
             return;
         }
-        const cleanPhone = phone.replace(/\D/g, ''); // basic cleanup
+        let cleanPhone = phone.replace(/\D/g, ''); // remove non-digits
+        // If it's a local Ethiopian number starting with 0, replace with 251
+        if (cleanPhone.startsWith('0') && cleanPhone.length === 10) {
+            cleanPhone = '251' + cleanPhone.substring(1);
+        } else if (!cleanPhone.startsWith('251')) {
+            // Default to Ethiopian country code if not specified
+            cleanPhone = '251' + cleanPhone;
+        }
+
         const msg = encodeURIComponent(`Hello ${name}, this is a gentle reminder regarding your pending credit of ETB ${amount.toFixed(2)} at Tanika Liquor. Please arrange for payment at your earliest convenience. Thank you!`);
         window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
     };
