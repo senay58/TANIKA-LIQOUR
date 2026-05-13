@@ -21,6 +21,7 @@ export function FinanceDashboard() {
     const [isInjectOpen, setIsInjectOpen] = useState(false);
     const [injectAmount, setInjectAmount] = useState("");
     const [injectDesc, setInjectDesc] = useState("");
+    const [injectPasscode, setInjectPasscode] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handlePayCredit = async (id: string) => {
@@ -38,17 +39,23 @@ export function FinanceDashboard() {
             toast.error("Please enter a valid amount");
             return;
         }
+        if (!injectPasscode) {
+            toast.error("Admin passcode is required");
+            return;
+        }
 
         setIsSubmitting(true);
         try {
             await injectCashMutation.mutateAsync({
                 amount: Number(injectAmount),
-                description: injectDesc || "Manual cash injection"
+                description: injectDesc || "Manual cash injection",
+                passcode: injectPasscode
             });
             toast.success("Cash injected successfully!");
             setIsInjectOpen(false);
             setInjectAmount("");
             setInjectDesc("");
+            setInjectPasscode("");
         } catch (error: any) {
             toast.error(error.message || "Failed to inject cash");
         } finally {
@@ -290,6 +297,18 @@ export function FinanceDashboard() {
                                 value={injectDesc}
                                 onChange={(e) => setInjectDesc(e.target.value)}
                                 className="bg-secondary/50 border-border/50 focus:border-green-500/50"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="passcode">Admin Passcode</Label>
+                            <Input 
+                                id="passcode" 
+                                type="password"
+                                placeholder="••••••" 
+                                value={injectPasscode}
+                                onChange={(e) => setInjectPasscode(e.target.value)}
+                                className="bg-secondary/50 border-border/50 focus:border-green-500/50"
+                                required
                             />
                         </div>
                         <DialogFooter className="pt-4">

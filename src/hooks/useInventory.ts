@@ -376,10 +376,11 @@ export function useSalespersonNames() {
 export function useInjectCash() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ amount, description }: { amount: number; description: string }) => {
+        mutationFn: async ({ amount, description, passcode }: { amount: number; description: string; passcode: string }) => {
             const { data, error } = await supabase.rpc('inject_cash', {
                 p_amount: amount,
-                p_description: description
+                p_description: description,
+                p_passcode: passcode
             });
             if (error) throw error;
             return data;

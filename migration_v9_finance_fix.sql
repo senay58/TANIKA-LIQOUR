@@ -7,10 +7,15 @@ ALTER TABLE public.cash_ledger DROP CONSTRAINT IF EXISTS cash_ledger_type_check;
 ALTER TABLE public.cash_ledger ADD CONSTRAINT cash_ledger_type_check 
 CHECK (type IN ('sale', 'restock', 'credit_payment', 'adjustment', 'injection'));
 
--- 2. Create an RPC for Manual Cash Injection
-CREATE OR REPLACE FUNCTION inject_cash(p_amount NUMERIC, p_description TEXT)
+-- 2. Create an RPC for Manual Cash Injection with Passcode Protection
+CREATE OR REPLACE FUNCTION inject_cash(p_amount NUMERIC, p_description TEXT, p_passcode TEXT)
 RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER AS $$
 BEGIN
+    -- Verify admin secret
+    IF NOT verify_admin_secret(p_passcode) THEN
+        RAISE EXCEPTION 'Invalid admin passcode.';
+    END IF;
+
     INSERT INTO public.cash_ledger (type, amount, description)
     VALUES ('injection', p_amount, p_description);
     RETURN TRUE;
