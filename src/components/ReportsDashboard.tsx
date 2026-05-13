@@ -183,6 +183,17 @@ export function ReportsDashboard() {
               <p className="text-sm text-muted-foreground">Revenue by staff member.</p>
             </div>
           </div>
+          <Select value={graphTimeFrame} onValueChange={(val: any) => setGraphTimeFrame(val)}>
+            <SelectTrigger className="w-[140px] h-9 text-xs">
+              <SelectValue placeholder="Timeframe" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Time</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
+              <SelectItem value="week">This Week</SelectItem>
+              <SelectItem value="today">Today</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
 

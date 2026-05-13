@@ -21,7 +21,7 @@ export function FinanceDashboard() {
     const [isInjectOpen, setIsInjectOpen] = useState(false);
     const [injectAmount, setInjectAmount] = useState("");
     const [injectDesc, setInjectDesc] = useState("");
-    const [injectPasscode, setInjectPasscode] = useState("");
+    const [injectPassword, setInjectPassword] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handlePayCredit = async (id: string) => {
@@ -39,8 +39,8 @@ export function FinanceDashboard() {
             toast.error("Please enter a valid amount");
             return;
         }
-        if (!injectPasscode) {
-            toast.error("Admin passcode is required");
+        if (!injectPassword) {
+            toast.error("Admin password is required");
             return;
         }
 
@@ -49,13 +49,13 @@ export function FinanceDashboard() {
             await injectCashMutation.mutateAsync({
                 amount: Number(injectAmount),
                 description: injectDesc || "Manual cash injection",
-                passcode: injectPasscode
+                passcode: injectPassword
             });
             toast.success("Cash injected successfully!");
             setIsInjectOpen(false);
             setInjectAmount("");
             setInjectDesc("");
-            setInjectPasscode("");
+            setInjectPassword("");
         } catch (error: any) {
             toast.error(error.message || "Failed to inject cash");
         } finally {
@@ -104,7 +104,7 @@ export function FinanceDashboard() {
             {/* Top Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card className="glass-card border-green-500/20 bg-green-500/5 overflow-hidden relative">
-                    <div className="absolute right-0 top-0 p-8 opacity-10">
+                    <div className="absolute right-0 top-0 p-8 opacity-10 pointer-events-none">
                         <Wallet className="w-24 h-24 text-green-500" />
                     </div>
                     <CardHeader className="pb-2">
@@ -133,7 +133,7 @@ export function FinanceDashboard() {
                 </Card>
 
                 <Card className="glass-card border-red-500/20 bg-red-500/5 overflow-hidden relative">
-                    <div className="absolute right-0 top-0 p-8 opacity-10">
+                    <div className="absolute right-0 top-0 p-8 opacity-10 pointer-events-none">
                         <Clock className="w-24 h-24 text-red-500" />
                     </div>
                     <CardHeader className="pb-2">
@@ -300,13 +300,13 @@ export function FinanceDashboard() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="passcode">Admin Passcode</Label>
+                            <Label htmlFor="password">Admin Password</Label>
                             <Input 
-                                id="passcode" 
+                                id="password" 
                                 type="password"
                                 placeholder="••••••" 
-                                value={injectPasscode}
-                                onChange={(e) => setInjectPasscode(e.target.value)}
+                                value={injectPassword}
+                                onChange={(e) => setInjectPassword(e.target.value)}
                                 className="bg-secondary/50 border-border/50 focus:border-green-500/50"
                                 required
                             />
