@@ -1,6 +1,6 @@
-import { useSalesHistory, useUndoSale, useProducts, useSalespersonNames } from "@/hooks/useInventory";
+import { useSalesHistory, useProducts, useSalespersonNames } from "@/hooks/useInventory";
 import { format, isWithinInterval, startOfDay, endOfDay } from "date-fns";
-import { ReceiptText, Undo2, Calendar as CalendarIcon, Download, X, ChevronDown, ChevronUp, User, Info, CreditCard, ChevronRight, Phone } from "lucide-react";
+import { ReceiptText, Calendar as CalendarIcon, Download, X, ChevronDown, ChevronUp, User, Info, CreditCard, ChevronRight, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useState, useMemo } from "react";
@@ -18,14 +18,12 @@ interface SalesHistoryProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     inline?: boolean;
-    showUndo?: boolean;
 }
 
-export function SalesHistory({ open, onOpenChange, inline, showUndo = false }: SalesHistoryProps) {
+export function SalesHistory({ open, onOpenChange, inline }: SalesHistoryProps) {
     const { data: sales = [], isLoading } = useSalesHistory();
     const { data: products = [] } = useProducts();
-    const { data: spNames } = useSalespersonNames();
-    const undoSaleMutation = useUndoSale();
+    const { data: spNames = { sp1: "Salesperson 1", sp2: "Salesperson 2" } } = useSalespersonNames();
     const [dateFilter, setDateFilter] = useState<DateRange | undefined>();
     const [expandedId, setExpandedId] = useState<string | null>(null);
     const [isCollapsed, setIsCollapsed] = useState(true);
@@ -37,20 +35,7 @@ export function SalesHistory({ open, onOpenChange, inline, showUndo = false }: S
     };
 
 
-    const handleUndo = async (txItems: any[]) => {
-        if (confirm(`Are you sure you want to undo this entire transaction (${txItems.length} items)? Stock will be restored.`)) {
-            try {
-                // For now, we undo each item sequentially
-                for (const item of txItems) {
-                    await undoSaleMutation.mutateAsync(item);
-                }
-                toast.success("Transaction reversed successfully.");
-            } catch (error) {
-                console.error(error);
-                toast.error("Failed to undo some items in the transaction");
-            }
-        }
-    };
+
 
     // ── Grouping into Transactions ──
     const transactions = useMemo(() => {
@@ -58,6 +43,7 @@ export function SalesHistory({ open, onOpenChange, inline, showUndo = false }: S
         const legacy: any[] = [];
         
         sales.forEach(s => {
+            if (s.is_reversed) return; // Skip reversed sales
             // Apply existing filters
             const saleDate = new Date(s.sale_date);
             let matchesDate = true;
@@ -140,16 +126,13 @@ export function SalesHistory({ open, onOpenChange, inline, showUndo = false }: S
             <div className="space-y-3">
                 {transactions.map((tx) => {
                     const isExpanded = expandedId === tx.id;
-                    const isReversed = tx.is_reversed;
                     const primaryItem = tx.items[0];
 
                     return (
                         <div
                             key={tx.id}
                             onClick={() => setExpandedId(isExpanded ? null : tx.id)}
-                            className={`p-4 rounded-xl border flex flex-col gap-3 transition-all cursor-pointer ${
-                                isReversed ? 'opacity-60 grayscale bg-secondary/20' : 'bg-card shadow-sm hover:shadow-md border-border/50'
-                            } ${isExpanded ? 'ring-1 ring-primary/30 border-primary/40 shadow-lg' : ''}`}
+                            className={`p-4 rounded-xl border flex flex-col gap-3 transition-all cursor-pointer bg-card shadow-sm hover:shadow-md border-border/50 ${isExpanded ? 'ring-1 ring-primary/30 border-primary/40 shadow-lg' : ''}`}
                         >
                             <div className="flex gap-3 items-start">
                                 <div className="bg-primary/10 rounded-lg p-2 h-fit shrink-0">
@@ -159,7 +142,6 @@ export function SalesHistory({ open, onOpenChange, inline, showUndo = false }: S
                                     <div className="flex items-start justify-between gap-2">
                                         <h4 className="font-bold text-sm leading-snug break-words min-w-0">
                                             {tx.is_transaction ? `Order (${tx.items.length} items)` : (primaryItem.product?.name || 'Item Sale')}
-                                            {isReversed && <Badge variant="destructive" className="ml-2 text-[8px] h-4">REVERSED</Badge>}
                                         </h4>
                                         <div className="text-right shrink-0">
                                             <p className="font-black text-sm text-foreground whitespace-nowrap">ETB {tx.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
@@ -240,17 +222,7 @@ export function SalesHistory({ open, onOpenChange, inline, showUndo = false }: S
                                             </div>
                                         </div>
 
-                                        {showUndo && !isReversed && (
-                                            <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                className="w-full h-10 rounded-xl font-bold"
-                                                onClick={(e) => { e.stopPropagation(); handleUndo(tx.items); }}
-                                            >
-                                                <Undo2 className="w-4 h-4 mr-2" />
-                                                Reverse Sale
-                                            </Button>
-                                        )}
+
                                     </div>
                                 </div>
                             )}
@@ -278,7 +250,7 @@ export function SalesHistory({ open, onOpenChange, inline, showUndo = false }: S
                                 {transactions.length} Records
                             </Badge>
                         </div>
-                        <p className="text-[11px] text-muted-foreground font-medium pl-8">Review details, customers, and undo sales.</p>
+                        <p className="text-[11px] text-muted-foreground font-medium pl-8">Review details and customer information.</p>
                     </div>
                     <div className="bg-secondary/50 p-2 rounded-full">
                         {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}

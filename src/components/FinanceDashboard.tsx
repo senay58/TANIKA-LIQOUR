@@ -1,17 +1,27 @@
-import { useFinanceSummary, useCashFlow, useCredits, usePayCredit } from "@/hooks/useInventory";
+import { useFinanceSummary, useCashFlow, useCredits, usePayCredit, useInjectCash } from "@/hooks/useInventory";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, ArrowUpCircle, ArrowDownCircle, Clock, CheckCircle2, Phone, User, Calendar } from "lucide-react";
+import { Wallet, ArrowUpCircle, ArrowDownCircle, Clock, CheckCircle2, Phone, User, Calendar, PlusCircle } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 
 export function FinanceDashboard() {
     const { data: summary } = useFinanceSummary();
     const { data: cashFlow = [] } = useCashFlow();
     const { data: credits = [] } = useCredits();
     const payCreditMutation = usePayCredit();
+    const injectCashMutation = useInjectCash();
+
+    const [isInjectOpen, setIsInjectOpen] = useState(false);
+    const [injectAmount, setInjectAmount] = useState("");
+    const [injectDesc, setInjectDesc] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handlePayCredit = async (id: string) => {
         try {
@@ -19,6 +29,30 @@ export function FinanceDashboard() {
             toast.success("Credit payment recorded successfully!");
         } catch (error: any) {
             toast.error(error.message || "Failed to record payment");
+        }
+    };
+
+    const handleInjectCash = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!injectAmount || isNaN(Number(injectAmount))) {
+            toast.error("Please enter a valid amount");
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            await injectCashMutation.mutateAsync({
+                amount: Number(injectAmount),
+                description: injectDesc || "Manual cash injection"
+            });
+            toast.success("Cash injected successfully!");
+            setIsInjectOpen(false);
+            setInjectAmount("");
+            setInjectDesc("");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to inject cash");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -67,10 +101,21 @@ export function FinanceDashboard() {
                         <Wallet className="w-24 h-24 text-green-500" />
                     </div>
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                            <Wallet className="w-4 h-4 text-green-500" />
-                            Current Cash Pile
-                        </CardTitle>
+                        <div className="flex justify-between items-center">
+                            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                                <Wallet className="w-4 h-4 text-green-500" />
+                                Current Cash Pile
+                            </CardTitle>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="h-7 px-2 text-[10px] gap-1 border-green-500/30 hover:bg-green-500/10 text-green-500"
+                                onClick={() => setIsInjectOpen(true)}
+                            >
+                                <PlusCircle className="w-3 h-3" />
+                                Inject Cash
+                            </Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
                         <div className="text-3xl font-bold text-green-500">
@@ -211,6 +256,62 @@ export function FinanceDashboard() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Injection Dialog */}
+            <Dialog open={isInjectOpen} onOpenChange={setIsInjectOpen}>
+                <DialogContent className="sm:max-w-[400px] glass-card border-green-500/20">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <PlusCircle className="w-5 h-5 text-green-500" />
+                            Inject Extra Cash
+                        </DialogTitle>
+                        <DialogDescription>
+                            Add manual funds to the business cash pile without resetting.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleInjectCash} className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="amount">Amount (ETB)</Label>
+                            <Input 
+                                id="amount" 
+                                type="number" 
+                                placeholder="0.00" 
+                                value={injectAmount}
+                                onChange={(e) => setInjectAmount(e.target.value)}
+                                className="bg-secondary/50 border-border/50 focus:border-green-500/50"
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="description">Description (Optional)</Label>
+                            <Input 
+                                id="description" 
+                                placeholder="e.g. Found extra business funds" 
+                                value={injectDesc}
+                                onChange={(e) => setInjectDesc(e.target.value)}
+                                className="bg-secondary/50 border-border/50 focus:border-green-500/50"
+                            />
+                        </div>
+                        <DialogFooter className="pt-4">
+                            <Button 
+                                type="button" 
+                                variant="ghost" 
+                                onClick={() => setIsInjectOpen(false)}
+                                disabled={isSubmitting}
+                            >
+                                Cancel
+                            </Button>
+                            <Button 
+                                type="submit" 
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? "Injecting..." : "Inject Cash"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

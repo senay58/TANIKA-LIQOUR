@@ -167,7 +167,7 @@ export function ReportsDashboard() {
         </div>
         
         {/* The SalesHistory now has its own internal collapsible state by default */}
-        <SalesHistory open={true} onOpenChange={() => {}} inline showUndo={true} />
+        <SalesHistory open={true} onOpenChange={() => {}} inline />
       </div>
 
 

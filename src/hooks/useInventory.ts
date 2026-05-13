@@ -291,44 +291,7 @@ export function useImportSalesCSV() {
     });
 }
 
-export function useUndoSale() {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: async (sale: any) => {
-            if (sale.is_reversed) throw new Error("Sale is already reversed");
 
-            // 1. Mark sale as reversed
-            const { error: updateSaleError } = await supabase
-                .from('sales')
-                .update({ is_reversed: true })
-                .eq('id', sale.id);
-
-            if (updateSaleError) throw updateSaleError;
-
-            // 2. Increment product quantity back
-            if (sale.product_id) {
-                const { data: product, error: fetchError } = await supabase
-                    .from('products')
-                    .select('quantity')
-                    .eq('id', sale.product_id)
-                    .single();
-
-                if (!fetchError && product) {
-                    await supabase
-                        .from('products')
-                        .update({ quantity: product.quantity + sale.quantity })
-                        .eq('id', sale.product_id);
-                }
-            }
-            return true;
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['products'] });
-            queryClient.invalidateQueries({ queryKey: ['sales'] });
-            queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
-        },
-    });
-}
 
 // --- Finance & Credits ---
 
@@ -407,5 +370,23 @@ export function useSalespersonNames() {
             return data as { sp1: string; sp2: string };
         },
         refetchInterval: 60000,
+    });
+}
+
+export function useInjectCash() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ amount, description }: { amount: number; description: string }) => {
+            const { data, error } = await supabase.rpc('inject_cash', {
+                p_amount: amount,
+                p_description: description
+            });
+            if (error) throw error;
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
+            queryClient.invalidateQueries({ queryKey: ['finance-summary'] });
+        },
     });
 }

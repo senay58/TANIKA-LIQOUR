@@ -37,15 +37,15 @@ export function AddCategoryDialog({ open, onOpenChange }: AddCategoryDialogProps
     };
 
     const handleDelete = async (cat: any) => {
-        console.log("Attempting to delete category:", cat);
-        // Removing native confirm() temporarily to fix non-responsiveness in some environments
+        if (!confirm(`Are you sure you want to delete '${cat.name}'?`)) return;
+
         try {
             if (!cat.id) throw new Error("Category ID is missing");
             await deleteCategoryMutation.mutateAsync(cat.id);
             toast.success(`Category '${cat.name}' removed`);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Delete error:", error);
-            toast.error("Failed to delete category. It might be in use.");
+            toast.error(error.message || "Failed to delete category. It might be in use.");
         }
     };
 
