@@ -128,8 +128,12 @@ export function ReportsDashboard() {
           s.customer_info || "-",
           s.quantity.toString(),
           (s.quantity * s.price_at_sale).toFixed(2),
-          s.payment_method === "cash" ? "Cash" : s.payment_method === "pos" ? `POS (${s.bank_name || "?"})` : `Bank (${s.bank_name || "Transfer"})`,
-          s.reference_number || "-",
+          s.payment_method === "cash"
+            ? "CASH"
+            : s.payment_method === "pos"
+              ? `POS – ${(s.bank_name || "?").toUpperCase()}`
+              : `BANK – ${(s.bank_name || "N/A").toUpperCase()}`,
+          s.reference_number ? `REF: ${s.reference_number}` : "-",
           s.salesperson_number === 1 ? (spNames?.sp1 || "Salesperson 1") : (s.salesperson_number === 2 ? (spNames?.sp2 || "Salesperson 2") : "N/A"),
         ]),
         startY: 55,

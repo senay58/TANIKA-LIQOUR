@@ -145,7 +145,7 @@ export function SalesHistory({ open, onOpenChange, inline }: SalesHistoryProps) 
                                         </h4>
                                         <div className="text-right shrink-0">
                                             <p className="font-black text-sm text-foreground whitespace-nowrap">ETB {tx.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                                            <p className="text-[9px] uppercase tracking-tighter text-muted-foreground font-bold">{tx.payment_method === 'cash' ? 'Cash' : tx.payment_method === 'pos' ? `POS – ${tx.bank_name}` : tx.bank_name}</p>
+                                            <p className="text-[9px] uppercase tracking-tighter text-muted-foreground font-bold">{tx.payment_method === 'cash' ? 'CASH' : tx.payment_method === 'pos' ? `POS – ${(tx.bank_name || '').toUpperCase()}` : `BANK – ${(tx.bank_name || '').toUpperCase()}`}</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
@@ -206,10 +206,10 @@ export function SalesHistory({ open, onOpenChange, inline }: SalesHistoryProps) 
                                                 <div className="space-y-1">
                                                     <p className="text-sm font-bold flex items-center gap-2">
                                                         <CreditCard className="w-3.5 h-3.5 text-green-500 shrink-0" />
-                                                        {tx.payment_method === 'cash' ? 'Cash' : tx.payment_method === 'pos' ? `POS – ${tx.bank_name}` : `Bank Transfer (${tx.bank_name})`}
+                                                        {tx.payment_method === 'cash' ? 'CASH' : tx.payment_method === 'pos' ? `POS – ${(tx.bank_name || '').toUpperCase()}` : `BANK TRANSFER – ${(tx.bank_name || '').toUpperCase()}`}
                                                     </p>
                                                     {tx.reference_number && (
-                                                        <p className="text-xs font-mono text-muted-foreground break-all pl-5">Ref: {tx.reference_number}</p>
+                                                        <p className="text-xs font-mono text-muted-foreground break-all pl-5">REF: {tx.reference_number}</p>
                                                     )}
                                                 </div>
                                             </div>

@@ -14,7 +14,7 @@ import { useSalespersonNames } from "@/hooks/useInventory";
 
 type PaymentMethod = "cash" | "bank_transfer" | "pos";
 
-const BANKS = ["CBE", "BOA", "Telebirr", "Dashen Bank"];
+const BANKS = ["CBE", "BOA", "TELEBIRR", "DASHEN BANK", "AWASH BANK"];
 const POS_BANKS = ["CBE", "BOA", "DASHEN", "Awash"];
 
 const fmt = (n: number) =>
@@ -246,8 +246,8 @@ export function CartSheet() {
                                         type="button"
                                         onClick={() => setPaymentMethod("cash")}
                                         className={`flex-1 py-2 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${paymentMethod === "cash"
-                                                ? "bg-green-600 text-white"
-                                                : "text-muted-foreground hover:text-foreground"
+                                            ? "bg-green-600 text-white"
+                                            : "text-muted-foreground hover:text-foreground"
                                             }`}
                                     >
                                         <Banknote className="w-3.5 h-3.5" />
@@ -257,8 +257,8 @@ export function CartSheet() {
                                         type="button"
                                         onClick={() => setPaymentMethod("bank_transfer")}
                                         className={`flex-1 py-2 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${paymentMethod === "bank_transfer"
-                                                ? "bg-blue-600 text-white"
-                                                : "text-muted-foreground hover:text-foreground"
+                                            ? "bg-blue-600 text-white"
+                                            : "text-muted-foreground hover:text-foreground"
                                             }`}
                                     >
                                         <Building2 className="w-3.5 h-3.5" />
@@ -268,8 +268,8 @@ export function CartSheet() {
                                         type="button"
                                         onClick={() => setPaymentMethod("pos")}
                                         className={`flex-1 py-2 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${paymentMethod === "pos"
-                                                ? "bg-violet-600 text-white"
-                                                : "text-muted-foreground hover:text-foreground"
+                                            ? "bg-violet-600 text-white"
+                                            : "text-muted-foreground hover:text-foreground"
                                             }`}
                                     >
                                         <CreditCard className="w-3.5 h-3.5" />
