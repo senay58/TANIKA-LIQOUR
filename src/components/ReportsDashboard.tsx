@@ -58,17 +58,17 @@ export function ReportsDashboard() {
     doc.setFontSize(28);
     doc.setTextColor(180, 20, 20); // Branded Red
     doc.text("TANIKA LIQUOR", 14, 25);
-    
+
     // Subtitle / Title
     doc.setFontSize(12);
     doc.setTextColor(80);
     doc.text(title, 14, 34);
-    
+
     // Decorative line
     doc.setDrawColor(180, 20, 20);
     doc.setLineWidth(1);
     doc.line(14, 38, 196, 38);
-    
+
     doc.setFontSize(9);
     doc.setTextColor(120);
     doc.text(`Generated: ${format(new Date(), "PPpp")}`, 14, 45);
@@ -117,7 +117,7 @@ export function ReportsDashboard() {
       const dateStr = dateFilter?.from
         ? `${format(dateFilter.from, "PPP")}${dateFilter.to ? ` - ${format(dateFilter.to, "PPP")}` : ""}`
         : "Full History";
-      
+
       drawPDFHeader(doc, `Sales Details Report (${dateStr})`);
 
       autoTable(doc, {
@@ -128,7 +128,7 @@ export function ReportsDashboard() {
           s.customer_info || "-",
           s.quantity.toString(),
           (s.quantity * s.price_at_sale).toFixed(2),
-          s.payment_method === "cash" ? "Cash" : `${s.bank_name || "Bank"}`,
+          s.payment_method === "cash" ? "Cash" : s.payment_method === "pos" ? `POS (${s.bank_name || "?"})` : `Bank (${s.bank_name || "Transfer"})`,
           s.reference_number || "-",
           s.salesperson_number === 1 ? (spNames?.sp1 || "Salesperson 1") : (s.salesperson_number === 2 ? (spNames?.sp2 || "Salesperson 2") : "N/A"),
         ]),
@@ -165,9 +165,9 @@ export function ReportsDashboard() {
             <p className="text-sm text-muted-foreground">Historical transaction log and performance insights.</p>
           </div>
         </div>
-        
+
         {/* The SalesHistory now has its own internal collapsible state by default */}
-        <SalesHistory open={true} onOpenChange={() => {}} inline />
+        <SalesHistory open={true} onOpenChange={() => { }} inline />
       </div>
 
 
@@ -257,10 +257,10 @@ export function ReportsDashboard() {
               <p className="text-sm font-bold text-foreground">Download Reports</p>
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">Select a report type to export</p>
             </div>
-            
+
             <div className="space-y-1">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="w-full justify-start gap-3 h-12 rounded-xl text-sm"
                 onClick={exportInventoryPDF}
                 disabled={loadingProducts || isExporting}
@@ -298,8 +298,8 @@ export function ReportsDashboard() {
                 </Popover>
               </div>
 
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="w-full justify-start gap-3 h-12 rounded-xl text-sm"
                 onClick={exportSalesPDF}
                 disabled={loadingSales || isExporting}

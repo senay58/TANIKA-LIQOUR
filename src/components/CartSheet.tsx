@@ -2,7 +2,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/CartContext";
 import { useBulkRecordSale } from "@/hooks/useInventory";
-import { Trash2, Plus, Minus, ShoppingCart, Banknote, Building2, Hash } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingCart, Banknote, Building2, Hash, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
@@ -12,9 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar as CalendarIcon, User, Phone, UserCog, UserCheck } from "lucide-react";
 import { useSalespersonNames } from "@/hooks/useInventory";
 
-type PaymentMethod = "cash" | "bank_transfer";
+type PaymentMethod = "cash" | "bank_transfer" | "pos";
 
 const BANKS = ["CBE", "BOA", "Telebirr", "Dashen Bank"];
+const POS_BANKS = ["CBE", "BOA", "DASHEN", "Awash"];
+
+const fmt = (n: number) =>
+    n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export function CartSheet() {
     const { items, isCartOpen, setCartOpen, removeFromCart, updateQuantity, clearCart, cartTotal } = useCart();
@@ -32,6 +36,7 @@ export function CartSheet() {
     // Payment fields
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
     const [bankName, setBankName] = useState("");
+    const [posBank, setPosBank] = useState("");
     const [referenceNumber, setReferenceNumber] = useState("");
 
     // Salesperson
@@ -44,6 +49,7 @@ export function CartSheet() {
         setDueDate("");
         setPaymentMethod("cash");
         setBankName("");
+        setPosBank("");
         setReferenceNumber("");
         setSalesperson(null);
     };
@@ -67,6 +73,14 @@ export function CartSheet() {
             toast.error("Please enter the transaction reference number.");
             return;
         }
+        if (paymentMethod === "pos" && !posBank) {
+            toast.error("Please select a POS provider (CBE, BOA, DASHEN, or Awash).");
+            return;
+        }
+        if (paymentMethod === "pos" && !referenceNumber.trim()) {
+            toast.error("Please enter the POS reference number.");
+            return;
+        }
         if (!salesperson) {
             toast.error("Please select a Salesperson (1 or 2) before checking out.");
             return;
@@ -82,8 +96,8 @@ export function CartSheet() {
                 customer_info: isCreditSale ? `CREDIT: ${customerName}` : (customerName || item.customerInfo || ""),
                 customer_phone: customerPhone || "", // Added this
                 payment_method: paymentMethod,
-                bank_name: paymentMethod === "bank_transfer" ? bankName : null,
-                reference_number: paymentMethod === "bank_transfer" ? referenceNumber : null,
+                bank_name: paymentMethod === "bank_transfer" ? bankName : paymentMethod === "pos" ? posBank : null,
+                reference_number: (paymentMethod === "bank_transfer" || paymentMethod === "pos") ? referenceNumber : null,
                 salesperson_number: salesperson,
             }));
 
@@ -96,7 +110,12 @@ export function CartSheet() {
                 } : undefined,
             });
 
-            toast.success(`✅ Order checked out! Payment: ${paymentMethod === "cash" ? "Cash" : `${bankName} Transfer`}`);
+            const paymentLabel =
+                paymentMethod === "cash" ? "Cash" :
+                    paymentMethod === "bank_transfer" ? `${bankName} Transfer` :
+                        `POS – ${posBank}`;
+
+            toast.success(`✅ Order checked out! Payment: ${paymentLabel}`);
             clearCart();
             setCartOpen(false);
             resetForm();
@@ -131,9 +150,9 @@ export function CartSheet() {
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <h4 className="font-semibold text-sm line-clamp-1">{item.product.name}</h4>
-                                            <p className="text-xs text-muted-foreground">ETB {item.priceAtSale.toFixed(2)} each</p>
+                                            <p className="text-xs text-muted-foreground">ETB {fmt(item.priceAtSale)} each</p>
                                         </div>
-                                        <p className="font-bold text-sm">ETB {(item.priceAtSale * item.quantity).toFixed(2)}</p>
+                                        <p className="font-bold text-sm">ETB {fmt(item.priceAtSale * item.quantity)}</p>
                                     </div>
 
                                     <div className="flex items-center justify-between mt-1">
@@ -164,148 +183,190 @@ export function CartSheet() {
                     {items.length > 0 && (
                         <div className="space-y-4 border-t pt-5 border-border/50">
 
-                        {/* ── Credit Sale Toggle ── */}
-                        {/* ── Global Customer Name ── */}
-                        <div className="p-3 bg-secondary/20 rounded-xl border border-border/50 space-y-3">
-                            <div className="space-y-1">
-                                <Label className="text-[10px] uppercase tracking-wider opacity-60 flex items-center gap-1">
-                                    <UserCheck className="w-3 h-3" />
-                                    Customer Name (Required)
-                                </Label>
-                                <div className="relative">
-                                    <User className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                                    <Input 
-                                        placeholder="Enter customer name..." 
-                                        className="pl-8 h-9 text-xs" 
-                                        value={customerName} 
-                                        onChange={e => setCustomerName(e.target.value)} 
+                            {/* ── Credit Sale Toggle ── */}
+                            {/* ── Global Customer Name ── */}
+                            <div className="p-3 bg-secondary/20 rounded-xl border border-border/50 space-y-3">
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] uppercase tracking-wider opacity-60 flex items-center gap-1">
+                                        <UserCheck className="w-3 h-3" />
+                                        Customer Name (Required)
+                                    </Label>
+                                    <div className="relative">
+                                        <User className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                                        <Input
+                                            placeholder="Enter customer name..."
+                                            className="pl-8 h-9 text-xs"
+                                            value={customerName}
+                                            onChange={e => setCustomerName(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 pt-1 border-t border-border/10">
+                                    <Checkbox
+                                        id="credit-sale"
+                                        checked={isCreditSale}
+                                        onCheckedChange={(c) => setIsCreditSale(c as boolean)}
                                     />
+                                    <Label htmlFor="credit-sale" className="text-sm font-bold cursor-pointer text-orange-500">Sell on Credit</Label>
                                 </div>
-                            </div>
 
-                            <div className="flex items-center gap-2 pt-1 border-t border-border/10">
-                                <Checkbox
-                                    id="credit-sale"
-                                    checked={isCreditSale}
-                                    onCheckedChange={(c) => setIsCreditSale(c as boolean)}
-                                />
-                                <Label htmlFor="credit-sale" className="text-sm font-bold cursor-pointer text-orange-500">Sell on Credit</Label>
-                            </div>
-
-                            {isCreditSale && (
-                                <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div className="space-y-1">
-                                            <Label className="text-[10px] uppercase tracking-wider opacity-60">Phone (Optional)</Label>
-                                            <div className="relative">
-                                                <Phone className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                                                <Input placeholder="09..." className="pl-8 h-9 text-xs" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
+                                {isCreditSale && (
+                                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase tracking-wider opacity-60">Phone (Optional)</Label>
+                                                <div className="relative">
+                                                    <Phone className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                                                    <Input placeholder="09..." className="pl-8 h-9 text-xs" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="space-y-1">
-                                            <Label className="text-[10px] uppercase tracking-wider opacity-60">Due Date</Label>
-                                            <div className="relative">
-                                                <CalendarIcon className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                                                <Input type="date" className="pl-8 h-9 text-xs" value={dueDate} onChange={e => setDueDate(e.target.value)} />
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] uppercase tracking-wider opacity-60">Due Date</Label>
+                                                <div className="relative">
+                                                    <CalendarIcon className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                                                    <Input type="date" className="pl-8 h-9 text-xs" value={dueDate} onChange={e => setDueDate(e.target.value)} />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* ── Payment Method ── */}
-                        <div className="p-3 bg-secondary/20 rounded-xl border border-border/50 space-y-3">
-                            <Label className="text-sm font-bold flex items-center gap-2">
-                                <Banknote className="w-4 h-4 text-green-500" />
-                                Payment Method
-                            </Label>
-
-                            {/* Toggle buttons */}
-                            <div className="flex rounded-lg overflow-hidden border border-border/50 bg-background/50">
-                                <button
-                                    type="button"
-                                    onClick={() => setPaymentMethod("cash")}
-                                    className={`flex-1 py-2 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
-                                        paymentMethod === "cash"
-                                            ? "bg-green-600 text-white"
-                                            : "text-muted-foreground hover:text-foreground"
-                                    }`}
-                                >
-                                    <Banknote className="w-3.5 h-3.5" />
-                                    Cash
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setPaymentMethod("bank_transfer")}
-                                    className={`flex-1 py-2 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
-                                        paymentMethod === "bank_transfer"
-                                            ? "bg-blue-600 text-white"
-                                            : "text-muted-foreground hover:text-foreground"
-                                    }`}
-                                >
-                                    <Building2 className="w-3.5 h-3.5" />
-                                    Bank Transfer
-                                </button>
+                                )}
                             </div>
 
-                            {/* Bank transfer details */}
-                            {paymentMethod === "bank_transfer" && (
-                                <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
-                                    <div className="space-y-1">
-                                        <Label className="text-[10px] uppercase tracking-wider opacity-60">Select Bank</Label>
-                                        <Select value={bankName} onValueChange={setBankName}>
-                                            <SelectTrigger className="h-9 text-xs">
-                                                <SelectValue placeholder="Choose bank..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {BANKS.map(b => (
-                                                    <SelectItem key={b} value={b}>{b}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-[10px] uppercase tracking-wider opacity-60">Reference Number</Label>
-                                        <div className="relative">
-                                            <Hash className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                                            <Input
-                                                placeholder="e.g. TXN-20240502-001"
-                                                className="pl-8 h-9 text-xs font-mono"
-                                                value={referenceNumber}
-                                                onChange={e => setReferenceNumber(e.target.value)}
-                                            />
+                            {/* ── Payment Method ── */}
+                            <div className="p-3 bg-secondary/20 rounded-xl border border-border/50 space-y-3">
+                                <Label className="text-sm font-bold flex items-center gap-2">
+                                    <Banknote className="w-4 h-4 text-green-500" />
+                                    Payment Method
+                                </Label>
+
+                                {/* Toggle buttons */}
+                                <div className="flex rounded-lg overflow-hidden border border-border/50 bg-background/50">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod("cash")}
+                                        className={`flex-1 py-2 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${paymentMethod === "cash"
+                                                ? "bg-green-600 text-white"
+                                                : "text-muted-foreground hover:text-foreground"
+                                            }`}
+                                    >
+                                        <Banknote className="w-3.5 h-3.5" />
+                                        Cash
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod("bank_transfer")}
+                                        className={`flex-1 py-2 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${paymentMethod === "bank_transfer"
+                                                ? "bg-blue-600 text-white"
+                                                : "text-muted-foreground hover:text-foreground"
+                                            }`}
+                                    >
+                                        <Building2 className="w-3.5 h-3.5" />
+                                        Bank
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod("pos")}
+                                        className={`flex-1 py-2 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${paymentMethod === "pos"
+                                                ? "bg-violet-600 text-white"
+                                                : "text-muted-foreground hover:text-foreground"
+                                            }`}
+                                    >
+                                        <CreditCard className="w-3.5 h-3.5" />
+                                        POS
+                                    </button>
+                                </div>
+
+                                {/* Bank transfer details */}
+                                {paymentMethod === "bank_transfer" && (
+                                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px] uppercase tracking-wider opacity-60">Select Bank</Label>
+                                            <Select value={bankName} onValueChange={setBankName}>
+                                                <SelectTrigger className="h-9 text-xs">
+                                                    <SelectValue placeholder="Choose bank..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {BANKS.map(b => (
+                                                        <SelectItem key={b} value={b}>{b}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px] uppercase tracking-wider opacity-60">Reference Number</Label>
+                                            <div className="relative">
+                                                <Hash className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                                                <Input
+                                                    placeholder="e.g. TXN-20240502-001"
+                                                    className="pl-8 h-9 text-xs font-mono"
+                                                    value={referenceNumber}
+                                                    onChange={e => setReferenceNumber(e.target.value)}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
 
-                        {/* ── Salesperson Selector ── */}
-                        <div className="p-3 bg-secondary/20 rounded-xl border border-border/50 space-y-3">
-                            <Label className="text-sm font-bold flex items-center gap-2">
-                                <UserCog className="w-4 h-4 text-primary" />
-                                Select Salesperson
-                            </Label>
-                            <div className="flex gap-2">
-                                <Button
-                                    type="button"
-                                    variant={salesperson === 1 ? "default" : "outline"}
-                                    onClick={() => setSalesperson(1)}
-                                    className="flex-1 text-xs"
-                                >
-                                    {salespersonNames?.sp1 || "Salesperson 1"}
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={salesperson === 2 ? "default" : "outline"}
-                                    onClick={() => setSalesperson(2)}
-                                    className="flex-1 text-xs"
-                                >
-                                    {salespersonNames?.sp2 || "Salesperson 2"}
-                                </Button>
+                                {/* POS details */}
+                                {paymentMethod === "pos" && (
+                                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px] uppercase tracking-wider opacity-60">POS Provider</Label>
+                                            <Select value={posBank} onValueChange={setPosBank}>
+                                                <SelectTrigger className="h-9 text-xs">
+                                                    <SelectValue placeholder="Choose POS provider..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {POS_BANKS.map(b => (
+                                                        <SelectItem key={b} value={b}>{b}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px] uppercase tracking-wider opacity-60">
+                                                Reference Number <span className="text-violet-400 font-bold">(Required)</span>
+                                            </Label>
+                                            <div className="relative">
+                                                <Hash className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                                                <Input
+                                                    placeholder="e.g. POS-20240502-001"
+                                                    className="pl-8 h-9 text-xs font-mono"
+                                                    value={referenceNumber}
+                                                    onChange={e => setReferenceNumber(e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        </div>
+
+                            {/* ── Salesperson Selector ── */}
+                            <div className="p-3 bg-secondary/20 rounded-xl border border-border/50 space-y-3">
+                                <Label className="text-sm font-bold flex items-center gap-2">
+                                    <UserCog className="w-4 h-4 text-primary" />
+                                    Select Salesperson
+                                </Label>
+                                <div className="flex gap-2">
+                                    <Button
+                                        type="button"
+                                        variant={salesperson === 1 ? "default" : "outline"}
+                                        onClick={() => setSalesperson(1)}
+                                        className="flex-1 text-xs"
+                                    >
+                                        {salespersonNames?.sp1 || "Salesperson 1"}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant={salesperson === 2 ? "default" : "outline"}
+                                        onClick={() => setSalesperson(2)}
+                                        className="flex-1 text-xs"
+                                    >
+                                        {salespersonNames?.sp2 || "Salesperson 2"}
+                                    </Button>
+                                </div>
+                            </div>
 
                         </div>
                     )}
@@ -317,7 +378,7 @@ export function CartSheet() {
                         {/* Order Total */}
                         <div className="flex items-center justify-between px-1">
                             <span className="font-medium text-muted-foreground">Order Total</span>
-                            <span className="text-xl font-bold text-[hsl(var(--revenue))]">ETB {cartTotal.toFixed(2)}</span>
+                            <span className="text-xl font-bold text-[hsl(var(--revenue))]">ETB {fmt(cartTotal)}</span>
                         </div>
 
                         {/* Actions */}

@@ -29,27 +29,32 @@ RETURNS TRIGGER AS $$
 DECLARE
     quantity_diff INTEGER;
     cost_per_unit DECIMAL(12,2);
-    is_sale BOOLEAN;
+    is_sale_session TEXT;
+    is_sale BOOLEAN := false;
 BEGIN
-    -- Check if this update is happening during a sale (set by process_bulk_sales)
-    -- current_setting returns text, we check for 'on'
+    -- Check if this update is happening during a sale
+    -- Use a safer way to check session variables
     BEGIN
-        is_sale := current_setting('app.is_sale', true) = 'on';
+        is_sale_session := current_setting('app.is_sale', true);
+        IF is_sale_session = 'on' THEN
+            is_sale := true;
+        END IF;
     EXCEPTION WHEN OTHERS THEN
         is_sale := false;
     END;
 
-    IF NEW.quantity <> OLD.quantity THEN
+    -- Only proceed if quantity actually changed
+    IF (OLD.quantity IS DISTINCT FROM NEW.quantity) THEN
         quantity_diff := NEW.quantity - OLD.quantity;
         cost_per_unit := COALESCE(NEW.price_in, 0);
         
         -- If quantity INCREASED -> Restock (Expense)
-        IF quantity_diff > 0 THEN
+        IF quantity_diff > 0 AND cost_per_unit > 0 THEN
             INSERT INTO public.cash_ledger (type, amount, description, reference_id)
             VALUES ('restock', -(quantity_diff * cost_per_unit), 'Restocked ' || quantity_diff || ' units of ' || NEW.name, NEW.id);
         
         -- If quantity DECREASED and it's NOT a sale -> Correction (Refund/Adjustment)
-        ELSIF quantity_diff < 0 AND NOT is_sale THEN
+        ELSIF quantity_diff < 0 AND NOT is_sale AND cost_per_unit > 0 THEN
             INSERT INTO public.cash_ledger (type, amount, description, reference_id)
             VALUES ('adjustment', -(quantity_diff * cost_per_unit), 'Inventory Correction: ' || ABS(quantity_diff) || ' units of ' || NEW.name, NEW.id);
         END IF;
@@ -122,7 +127,7 @@ END; $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- 5. Finalize the trigger to remove the 'WHEN' condition that restricted it to increases only
 DROP TRIGGER IF EXISTS on_product_restock ON public.products;
 CREATE TRIGGER on_product_restock
-    AFTER UPDATE OF quantity ON public.products
+    AFTER UPDATE ON public.products
     FOR EACH ROW
     EXECUTE FUNCTION public.track_restock_cash_flow();
 

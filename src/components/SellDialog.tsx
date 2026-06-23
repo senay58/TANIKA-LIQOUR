@@ -108,7 +108,7 @@ export function SellDialog({ product, open, onOpenChange, onSuccess }: SellDialo
                     <div className="bg-secondary/50 p-3 rounded-md flex justify-between items-center mt-2">
                         <span className="text-sm font-medium">Total Amount:</span>
                         <span className="text-lg font-bold text-primary">
-                            ETB {(product.priceOut * quantity).toFixed(2)}
+                            ETB {(product.priceOut * quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                     </div>
                 </div>

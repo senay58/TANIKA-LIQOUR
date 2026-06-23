@@ -41,7 +41,7 @@ export function SalesHistory({ open, onOpenChange, inline }: SalesHistoryProps) 
     const transactions = useMemo(() => {
         const groups: Record<string, any[]> = {};
         const legacy: any[] = [];
-        
+
         sales.forEach(s => {
             if (s.is_reversed) return; // Skip reversed sales
             // Apply existing filters
@@ -61,7 +61,7 @@ export function SalesHistory({ open, onOpenChange, inline }: SalesHistoryProps) 
                 legacy.push(s);
             }
         });
-        
+
         const grouped = Object.values(groups).map(items => ({
             id: items[0].transaction_id,
             is_transaction: true,
@@ -145,7 +145,7 @@ export function SalesHistory({ open, onOpenChange, inline }: SalesHistoryProps) 
                                         </h4>
                                         <div className="text-right shrink-0">
                                             <p className="font-black text-sm text-foreground whitespace-nowrap">ETB {tx.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-                                            <p className="text-[9px] uppercase tracking-tighter text-muted-foreground font-bold">{tx.payment_method === 'cash' ? 'Cash' : tx.bank_name}</p>
+                                            <p className="text-[9px] uppercase tracking-tighter text-muted-foreground font-bold">{tx.payment_method === 'cash' ? 'Cash' : tx.payment_method === 'pos' ? `POS – ${tx.bank_name}` : tx.bank_name}</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
@@ -173,14 +173,14 @@ export function SalesHistory({ open, onOpenChange, inline }: SalesHistoryProps) 
                                                     <div key={idx} className="flex justify-between items-start gap-2 bg-secondary/20 p-2.5 rounded-lg text-xs">
                                                         <div className="min-w-0">
                                                             <p className="font-bold break-words">{item.product?.name || "Product"}</p>
-                                                            <p className="opacity-60 mt-0.5">{item.quantity} × ETB {item.price_at_sale.toFixed(2)}</p>
+                                                            <p className="opacity-60 mt-0.5">{item.quantity} × ETB {item.price_at_sale.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                                                         </div>
-                                                        <p className="font-bold shrink-0">ETB {(item.quantity * item.price_at_sale).toFixed(2)}</p>
+                                                        <p className="font-bold shrink-0">ETB {(item.quantity * item.price_at_sale).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                                                     </div>
                                                 ))}
                                                 <div className="flex justify-between items-center pt-2 px-1">
                                                     <p className="text-xs font-bold text-muted-foreground">Grand Total</p>
-                                                    <p className="text-base font-black text-primary">ETB {tx.total.toFixed(2)}</p>
+                                                    <p className="text-base font-black text-primary">ETB {tx.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -206,7 +206,7 @@ export function SalesHistory({ open, onOpenChange, inline }: SalesHistoryProps) 
                                                 <div className="space-y-1">
                                                     <p className="text-sm font-bold flex items-center gap-2">
                                                         <CreditCard className="w-3.5 h-3.5 text-green-500 shrink-0" />
-                                                        {tx.payment_method === 'cash' ? 'Cash' : `Bank (${tx.bank_name})`}
+                                                        {tx.payment_method === 'cash' ? 'Cash' : tx.payment_method === 'pos' ? `POS – ${tx.bank_name}` : `Bank Transfer (${tx.bank_name})`}
                                                     </p>
                                                     {tx.reference_number && (
                                                         <p className="text-xs font-mono text-muted-foreground break-all pl-5">Ref: {tx.reference_number}</p>
@@ -236,7 +236,7 @@ export function SalesHistory({ open, onOpenChange, inline }: SalesHistoryProps) 
     if (inline) {
         return (
             <div className="border border-border/50 rounded-xl overflow-hidden bg-card/30">
-                <button 
+                <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
                     className="w-full flex items-center justify-between p-5 hover:bg-secondary/20 transition-colors border-b border-border/20"
                 >
@@ -256,7 +256,7 @@ export function SalesHistory({ open, onOpenChange, inline }: SalesHistoryProps) 
                         {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </div>
                 </button>
-                
+
                 {!isCollapsed && (
                     <div className="p-4 animate-in slide-in-from-top-2 duration-300">
                         {isLoading ? <div className="text-center text-muted-foreground p-8">Loading...</div> : content}

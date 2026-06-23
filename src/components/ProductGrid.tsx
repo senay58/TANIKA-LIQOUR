@@ -1,7 +1,7 @@
 import { Product, categoryEmojis } from "@/lib/inventory-data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Pencil, Trash2, PackageInfo } from "lucide-react";
+import { ShoppingCart, Pencil, Trash2, PackageOpen } from "lucide-react";
 
 interface ProductGridProps {
     products: Product[];
@@ -42,7 +42,7 @@ export function ProductGrid({ products, onEdit, onDelete, onSell, hidePriceIn = 
                         <div className="grid grid-cols-2 gap-2 mt-auto">
                             <div className="bg-secondary/20 p-2 rounded-md">
                                 <p className="text-[10px] uppercase text-muted-foreground font-semibold mb-0.5">Price</p>
-                                <p className="font-bold text-base text-foreground">ETB {product.priceOut.toFixed(2)}</p>
+                                <p className="font-bold text-base text-foreground">ETB {product.priceOut.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                             </div>
                             <div className="bg-secondary/20 p-2 rounded-md">
                                 <p className="text-[10px] uppercase text-muted-foreground font-semibold mb-0.5">Stock</p>
@@ -53,8 +53,8 @@ export function ProductGrid({ products, onEdit, onDelete, onSell, hidePriceIn = 
                         {/* Rollover exact costs (Hover state instead of expanded row) */}
                         {!hidePriceIn && (
                             <div className="mt-3 text-xs flex justify-between px-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <span className="text-muted-foreground">In: ETB {(product.priceIn * product.quantity).toFixed(0)}</span>
-                                <span className="font-bold text-[hsl(var(--revenue))]">Out: ETB {(product.priceOut * product.quantity).toFixed(0)}</span>
+                                <span className="text-muted-foreground">In: ETB {(product.priceIn * product.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                <span className="font-bold text-[hsl(var(--revenue))]">Out: ETB {(product.priceOut * product.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                             </div>
                         )}
                     </div>

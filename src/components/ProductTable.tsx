@@ -81,8 +81,8 @@ export function ProductTable({ products, onEdit, onDelete, onSell }: ProductTabl
                       {product.categoryEmoji || (categoryEmojis as any)[product.category]} {product.category}
                     </span>
                   </td>
-                  <td className="hidden md:table-cell px-3 py-3 text-sm text-muted-foreground">ETB {product.priceIn.toFixed(2)}</td>
-                  <td className="px-3 py-3 text-sm font-medium">ETB {product.priceOut.toFixed(2)}</td>
+                  <td className="hidden md:table-cell px-3 py-3 text-sm text-muted-foreground">ETB {product.priceIn.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  <td className="px-3 py-3 text-sm font-medium">ETB {product.priceOut.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   <td className="px-3 py-3 text-sm font-medium">{product.quantity}</td>
                   <td className="hidden sm:table-cell px-3 py-3">{stockStatus(product)}</td>
                   <td className="px-3 py-3 text-right" onClick={(e) => e.stopPropagation()}>
@@ -111,9 +111,9 @@ export function ProductTable({ products, onEdit, onDelete, onSell }: ProductTabl
                 {expandedId === product.id && (
                   <tr className="bg-secondary/30 transition-all animate-in slide-in-from-top-2">
                     <td colSpan={7} className="px-4 py-3 text-sm text-center font-medium opacity-90 delay-100">
-                      <span className="text-muted-foreground">Total Inventory Cost:</span> <span className="text-foreground mr-1">ETB {(product.priceIn * product.quantity).toFixed(2)}</span>
+                      <span className="text-muted-foreground">Total Inventory Cost:</span> <span className="text-foreground mr-1">ETB {(product.priceIn * product.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                       <span className="mx-4 text-border opacity-50">|</span>
-                      <span className="text-muted-foreground">Total Possible Value:</span> <span className="text-[hsl(var(--revenue))]">ETB {(product.priceOut * product.quantity).toFixed(2)}</span>
+                      <span className="text-muted-foreground">Total Possible Value:</span> <span className="text-[hsl(var(--revenue))]">ETB {(product.priceOut * product.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </td>
                   </tr>
                 )}
