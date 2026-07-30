@@ -48,6 +48,60 @@ export function useDeleteCategory() {
     });
 }
 
+// --- Brands ---
+export function useBrands() {
+    return useQuery({
+        queryKey: ['brands'],
+        queryFn: async () => {
+            const { data, error } = await supabase.from('brands').select('*').order('name');
+            if (error) throw error;
+            return data;
+        },
+    });
+}
+
+export function useSaveBrand() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ name, id }: { name: string; id?: string }) => {
+            if (id) {
+                const { data, error } = await supabase.from('brands').update({ name }).eq('id', id).select().single();
+                if (error) throw error;
+                return data;
+            } else {
+                const { data, error } = await supabase.from('brands').insert([{ name }]).select().single();
+                if (error) {
+                    if (error.code === '23505') throw new Error(`Brand '${name}' already exists.`);
+                    throw error;
+                }
+                return data;
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['brands'] });
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+        },
+    });
+}
+
+export function useDeleteBrand() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: string) => {
+            const { error } = await supabase.from('brands').delete().eq('id', id);
+            if (error) {
+                if (error.code === '23503') throw new Error(`Cannot delete brand. It is assigned to products.`);
+                throw error;
+            }
+            return id;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['brands'] });
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+        },
+    });
+}
+
 // --- Products ---
 export function useProducts() {
     return useQuery({
@@ -57,19 +111,20 @@ export function useProducts() {
                 .from('products')
                 .select(`
           *,
-          category:categories(name, emoji)
+          category:categories(name, emoji),
+          brand_rel:brands(name)
         `)
                 .order('name');
 
             if (error) throw error;
 
-            // Transform data to match the Product interface expected by the UI
             return data.map((item: any) => ({
                 id: item.id,
                 name: item.name,
                 category: item.category?.name || 'Uncategorized',
                 categoryEmoji: item.category?.emoji || '',
-                brand: item.brand,
+                brand: item.brand_rel?.name || 'Unknown',
+                brand_id: item.brand_id,
                 priceIn: Number(item.price_in),
                 priceOut: Number(item.price_out),
                 quantity: item.quantity,
@@ -84,25 +139,35 @@ export function useProducts() {
 export function useSaveProduct() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async (productData: Partial<Product> & { id?: string }) => {
-            // First, get the category ID
+        mutationFn: async (productData: Partial<Product> & { id?: string; brand_id?: string }) => {
             let catId = null;
             if (productData.category && productData.category !== 'Uncategorized') {
-                const { data: catData, error: catError } = await supabase
+                const { data: catData } = await supabase
                     .from('categories')
                     .select('id')
                     .eq('name', productData.category)
                     .maybeSingle();
 
-                if (catData) {
-                    catId = catData.id;
+                if (catData) catId = catData.id;
+            }
+            
+            // Allow string-based brand input for backward compatibility or direct creation
+            let finalBrandId = productData.brand_id;
+            if (!finalBrandId && productData.brand) {
+                // Try to find the brand by name, or create it
+                const { data: existingBrand } = await supabase.from('brands').select('id').eq('name', productData.brand).maybeSingle();
+                if (existingBrand) {
+                    finalBrandId = existingBrand.id;
+                } else {
+                    const { data: newBrand, error: brandErr } = await supabase.from('brands').insert([{ name: productData.brand }]).select().single();
+                    if (!brandErr && newBrand) finalBrandId = newBrand.id;
                 }
             }
 
             const payload = {
                 name: productData.name,
                 category_id: catId,
-                brand: productData.brand,
+                brand_id: finalBrandId,
                 price_in: Number(productData.priceIn) || 0,
                 price_out: Number(productData.priceOut) || 0,
                 quantity: Number(productData.quantity) || 0,
@@ -111,22 +176,11 @@ export function useSaveProduct() {
             };
 
             if (productData.id && !productData.id.startsWith('draft-')) {
-                // Update
-                const { data, error } = await supabase
-                    .from('products')
-                    .update(payload)
-                    .eq('id', productData.id)
-                    .select()
-                    .single();
+                const { data, error } = await supabase.from('products').update(payload).eq('id', productData.id).select().single();
                 if (error) throw new Error(error.message);
                 return data;
             } else {
-                // Insert
-                const { data, error } = await supabase
-                    .from('products')
-                    .insert([payload])
-                    .select()
-                    .single();
+                const { data, error } = await supabase.from('products').insert([payload]).select().single();
                 if (error) throw new Error(error.message);
                 return data;
             }
@@ -138,6 +192,34 @@ export function useSaveProduct() {
         },
     });
 }
+
+// --- Stock Entries ---
+export function useSaveStockEntry() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ product_id, quantity, price_in }: { product_id: string; quantity: number; price_in: number }) => {
+            // This insert triggers `track_stock_entry_cash_flow` which updates the cash ledger and the product overall quantity.
+            const { data, error } = await supabase.from('stock_entries').insert([{
+                product_id,
+                quantity_added: quantity,
+                price_in: price_in
+            }]).select().single();
+            
+            if (error) throw new Error(error.message);
+            
+            // Update the baseline price_in on the product for reference (optional, but good for UI)
+            await supabase.from('products').update({ price_in: price_in }).eq('id', product_id);
+            
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['products'] });
+            queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
+            queryClient.invalidateQueries({ queryKey: ['finance-summary'] });
+        },
+    });
+}
+
 
 export function useDeleteProduct() {
     const queryClient = useQueryClient();
@@ -162,11 +244,23 @@ export function useSalesHistory() {
                 .from('sales')
                 .select(`
           *,
-          product:products(name, brand, volume)
+          product:products(
+            name,
+            volume,
+            brand_rel:brands(name)
+          )
         `)
                 .order('sale_date', { ascending: false });
             if (error) throw error;
-            return data;
+            
+            return data.map((item: any) => ({
+                ...item,
+                product: item.product ? {
+                    name: item.product.name,
+                    volume: item.product.volume,
+                    brand: item.product.brand_rel?.name || 'Unknown',
+                } : null
+            }));
         },
         refetchInterval: 20000,
     });

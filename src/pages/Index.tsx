@@ -10,7 +10,7 @@ import { AdminDashboard } from "@/components/AdminDashboard";
 import { ReportsDashboard } from "@/components/ReportsDashboard";
 import { ProductTable } from "@/components/ProductTable";
 import { ProductGrid } from "@/components/ProductGrid";
-import { ProductFormDialog } from "@/components/ProductFormDialog";
+import { StockEntryDialog } from "@/components/ProductFormDialog";
 import { CategoryFilter } from "@/components/CategoryFilter";
 import { SalesHistory } from "@/components/SalesHistory";
 import { AddCategoryDialog } from "@/components/AddCategoryDialog";
@@ -299,7 +299,7 @@ const Index = () => {
                                             className="h-10 rounded-xl shadow-lg shadow-primary/30 font-bold"
                                         >
                                             <Plus className="h-3.5 w-3.5 mr-1.5" />
-                                            Add Product
+                                            Add Stock / Product
                                         </Button>
                                     </div>
                                 </div>
@@ -367,7 +367,7 @@ const Index = () => {
 
 
             {/* Dialogs */}
-            <ProductFormDialog open={productDialogOpen} onOpenChange={setProductDialogOpen} product={editingProduct} onSave={handleSave} categories={categories} />
+            <StockEntryDialog open={productDialogOpen} onOpenChange={setProductDialogOpen} categories={categories} editProductId={editingProduct?.id} />
             <AddCategoryDialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen} />
             <AdminSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
         </div>
