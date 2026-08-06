@@ -150,13 +150,15 @@ export function ReportsDashboard() {
       drawPDFHeader(doc, "Salesperson Comparison Report");
 
       // Summary table
+      let currentY = 55;
       autoTable(doc, {
         head: [["Salesperson", "Total Revenue (ETB)", "Items Sold"]],
         body: salesDataBySP.map(sp => [sp.name, sp.revenue.toFixed(2), sp.items.toString()]),
-        startY: 55,
+        startY: currentY,
         theme: "grid",
         styles: { fontSize: 10 },
         headStyles: { fillColor: [180, 20, 20], textColor: 255, fontStyle: "bold" },
+        didDrawPage: (data: any) => { currentY = data.cursor.y; },
       });
 
       // Per-salesperson breakdown
@@ -165,7 +167,8 @@ export function ReportsDashboard() {
         const spSales = (sales as any[]).filter(s => !s.is_reversed && s.salesperson_number === spNum);
         if (spSales.length === 0) return;
 
-        (doc as any).autoTable({
+        const fillColor: [number, number, number] = spNum === 1 ? [249, 115, 22] : [59, 130, 246];
+        autoTable(doc, {
           head: [[`${spName} — Individual Sales`, "Product", "Qty", "Total (ETB)", "Date"]],
           body: spSales.map((s: any) => [
             "",
@@ -174,10 +177,11 @@ export function ReportsDashboard() {
             (s.quantity * s.price_at_sale).toFixed(2),
             format(new Date(s.sale_date), "MMM dd, yyyy HH:mm"),
           ]),
-          startY: (doc as any).lastAutoTable.finalY + 12,
+          startY: currentY + 12,
           theme: "striped",
           styles: { fontSize: 8 },
-          headStyles: { fillColor: spNum === 1 ? [249, 115, 22] : [59, 130, 246], textColor: 255, fontStyle: "bold" },
+          headStyles: { fillColor, textColor: 255, fontStyle: "bold" },
+          didDrawPage: (data: any) => { currentY = data.cursor.y; },
         });
       });
 
