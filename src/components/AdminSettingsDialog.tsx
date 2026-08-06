@@ -199,7 +199,7 @@ function ProductsPanel() {
                                 className="flex h-10 w-full rounded-md border border-input bg-secondary px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                             >
                                 <option value="">Select category...</option>
-                                {categories.map((c: any) => <option key={c.id} value={c.name}>{c.emoji} {c.name}</option>)}
+                                {categories.map((c: any) => <option key={c.id} value={c.name}>{c.name}</option>)}
                             </select>
                         </div>
                     </div>

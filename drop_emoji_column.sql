@@ -1,0 +1,3 @@
+BEGIN;
+ALTER TABLE public.categories DROP COLUMN IF EXISTS emoji;
+COMMIT;

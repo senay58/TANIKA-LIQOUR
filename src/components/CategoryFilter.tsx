@@ -27,7 +27,7 @@ export function CategoryFilter({ selected, onSelect, categories }: CategoryFilte
               : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
             }`}
         >
-          {cat.emoji} {cat.name}
+          {cat.name}
         </button>
       ))}
     </div>

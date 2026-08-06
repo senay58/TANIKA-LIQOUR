@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAddCategory, useCategories, useDeleteCategory } from "@/hooks/useInventory";
+import { useSaveCategory, useCategories, useDeleteCategory } from "@/hooks/useInventory";
 import { toast } from "sonner";
 import { Trash2, Plus } from "lucide-react";
 
@@ -14,9 +14,8 @@ interface AddCategoryDialogProps {
 
 export function AddCategoryDialog({ open, onOpenChange }: AddCategoryDialogProps) {
     const [name, setName] = useState("");
-    const [emoji, setEmoji] = useState("");
     const { data: categories = [] } = useCategories();
-    const addCategoryMutation = useAddCategory();
+    const saveCategoryMutation = useSaveCategory();
     const deleteCategoryMutation = useDeleteCategory();
 
     const handleAdd = async () => {
@@ -26,10 +25,9 @@ export function AddCategoryDialog({ open, onOpenChange }: AddCategoryDialogProps
         }
 
         try {
-            await addCategoryMutation.mutateAsync({ name, emoji: emoji || "🏷️" });
+            await saveCategoryMutation.mutateAsync({ name });
             toast.success(`Category '${name}' added`);
             setName("");
-            setEmoji("");
         } catch (error: any) {
             console.error(error);
             toast.error(error.message || "Failed to add category");
@@ -75,18 +73,8 @@ export function AddCategoryDialog({ open, onOpenChange }: AddCategoryDialogProps
                                     onChange={e => setName(e.target.value)}
                                 />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="emoji">Emoji Icon</Label>
-                                <Input
-                                    id="emoji"
-                                    placeholder="E.g., 🥤"
-                                    value={emoji}
-                                    onChange={e => setEmoji(e.target.value)}
-                                    className="text-xl"
-                                />
-                            </div>
-                            <Button onClick={handleAdd} disabled={addCategoryMutation.isPending || !name.trim()} className="w-full">
-                                {addCategoryMutation.isPending ? "Adding..." : "Add Category"}
+                            <Button onClick={handleAdd} disabled={saveCategoryMutation.isPending || !name.trim()} className="w-full">
+                                {saveCategoryMutation.isPending ? "Adding..." : "Add Category"}
                             </Button>
                         </div>
                     </div>
@@ -101,7 +89,6 @@ export function AddCategoryDialog({ open, onOpenChange }: AddCategoryDialogProps
                                 categories.map((cat: any) => (
                                     <div key={cat.id} className="flex items-center justify-between p-2 border rounded-md bg-card">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xl">{cat.emoji}</span>
                                             <span className="font-medium">{cat.name}</span>
                                         </div>
                                         <Button
