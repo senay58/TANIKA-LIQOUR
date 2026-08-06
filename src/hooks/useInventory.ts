@@ -17,13 +17,13 @@ export function useCategories() {
 export function useSaveCategory() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ name, emoji, id }: { name: string; emoji?: string; id?: string }) => {
+        mutationFn: async ({ name, id }: { name: string; id?: string }) => {
             if (id) {
-                const { data, error } = await supabase.from('categories').update({ name, emoji: emoji || '' }).eq('id', id).select().single();
+                const { data, error } = await supabase.from('categories').update({ name }).eq('id', id).select().single();
                 if (error) throw new Error(error.message || "Failed to update category");
                 return data;
             } else {
-                const { data, error } = await supabase.from('categories').insert([{ name, emoji: emoji || '' }]).select().single();
+                const { data, error } = await supabase.from('categories').insert([{ name }]).select().single();
                 if (error) {
                     if (error.code === '23505') {
                         throw new Error(`Category '${name}' already exists.`);
@@ -118,7 +118,7 @@ export function useProducts() {
                 .from('products')
                 .select(`
           *,
-          category:categories(name, emoji),
+          category:categories(name),
           brand_rel:brands(name)
         `)
                 .order('name');
@@ -129,7 +129,6 @@ export function useProducts() {
                 id: item.id,
                 name: item.name,
                 category: item.category?.name || 'Uncategorized',
-                categoryEmoji: item.category?.emoji || '',
                 brand: item.brand_rel?.name || 'Unknown',
                 brand_id: item.brand_id,
                 priceIn: Number(item.price_in),
