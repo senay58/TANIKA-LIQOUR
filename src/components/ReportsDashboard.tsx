@@ -99,7 +99,7 @@ export function ReportsDashboard() {
     }
   };
 
-  const exportSalesPDF = () => {
+    const exportSalesPDF = () => {
     let salesToExport = sales as any[];
     if (dateFilter?.from) {
       salesToExport = sales.filter((s: any) => {
@@ -113,7 +113,7 @@ export function ReportsDashboard() {
 
     setIsExporting(true);
     try {
-      const doc = new jsPDF();
+      const doc = new jsPDF("landscape");
       const dateStr = dateFilter?.from
         ? `${format(dateFilter.from, "PPP")}${dateFilter.to ? ` - ${format(dateFilter.to, "PPP")}` : ""}`
         : "Full History";
@@ -121,74 +121,41 @@ export function ReportsDashboard() {
       drawPDFHeader(doc, `Sales Details Report (${dateStr})`);
 
       autoTable(doc, {
-        head: [["Date", "Product", "Customer", "Qty", "Total (ETB)", "Payment", "Ref", "Salesperson"]],
+        head: [["Date", "Product", "Category", "Qty", "Price", "Total (ETB)", "Payment", "Bank", "Ref", "Customer", "Salesperson"]],
         body: salesToExport.map((s: any) => [
           format(new Date(s.sale_date), "MMM dd, yyyy HH:mm"),
           s.product?.name || "Unknown",
-          s.customer_info || "-",
+          s.product?.category || "Unknown",
           s.quantity.toString(),
+          Number(s.price_at_sale).toFixed(2),
           (s.quantity * s.price_at_sale).toFixed(2),
-          s.payment_method === "cash"
-            ? "CASH"
-            : s.payment_method === "pos"
-              ? `POS – ${(s.bank_name || "?").toUpperCase()}`
-              : `BANK – ${(s.bank_name || "N/A").toUpperCase()}`,
-          s.reference_number ? `REF: ${s.reference_number}` : "-",
+          s.payment_method.toUpperCase(),
+          s.bank_name || "-",
+          s.reference_number || "-",
+          s.customer_info || "-",
           s.salesperson_number === 1 ? (spNames?.sp1 || "Salesperson 1") : (s.salesperson_number === 2 ? (spNames?.sp2 || "Salesperson 2") : "N/A"),
         ]),
         startY: 55,
         theme: "grid",
         styles: { fontSize: 8 },
         headStyles: { fillColor: [180, 20, 20], textColor: 255, fontStyle: 'bold' },
-        columnStyles: { 2: { cellWidth: 28 } },
+        columnStyles: { 
+            0: { cellWidth: 30 }, 
+            1: { cellWidth: 35 }, 
+            9: { cellWidth: 25 } 
+        },
       });
 
       const fileName = dateFilter?.from
         ? `Tanika_Sales_${format(dateFilter.from, "yyyy-MM-dd")}${dateFilter.to ? `_to_${format(dateFilter.to, "yyyy-MM-dd")}` : ""}.pdf`
         : `Tanika_Sales_Full_Report_${format(new Date(), "yyyy-MM-dd")}.pdf`;
       doc.save(fileName);
-      toast.success("Branded sales report downloaded.");
+      toast.success("Detailed Sales PDF downloaded.");
     } catch (err) {
       toast.error("Failed to generate PDF.");
     } finally {
       setIsExporting(false);
     }
-  };
-
-  const exportSalesCSV = () => {
-    let salesToExport = sales as any[];
-    if (dateFilter?.from) {
-      salesToExport = sales.filter((s: any) => {
-        const saleDate = new Date(s.sale_date);
-        const start = startOfDay(dateFilter.from!);
-        const end = dateFilter.to ? endOfDay(dateFilter.to) : endOfDay(dateFilter.from!);
-        return isWithinInterval(saleDate, { start, end });
-      });
-    }
-    if (salesToExport.length === 0) { toast.error("No sales data for the selected date range."); return; }
-
-    const rows = [["Date", "Product Name", "Category", "Quantity", "Price (ETB)", "Total (ETB)", "Payment Method", "Bank", "Ref", "Customer", "Salesperson"]];
-    salesToExport.forEach((s: any) => {
-      rows.push([
-        format(new Date(s.sale_date), "yyyy-MM-dd HH:mm:ss"),
-        s.product?.name || "Unknown",
-        s.product?.category || "Unknown",
-        s.quantity,
-        s.price_at_sale,
-        (s.quantity * s.price_at_sale).toFixed(2),
-        s.payment_method,
-        s.bank_name || '',
-        s.reference_number || '',
-        s.customer_info || '',
-        s.salesperson_number === 1 ? (spNames?.sp1 || "Salesperson 1") : (s.salesperson_number === 2 ? (spNames?.sp2 || "Salesperson 2") : "N/A")
-      ]);
-    });
-
-    const dateStr = dateFilter?.from
-      ? `${format(dateFilter.from, "yyyy-MM-dd")}${dateFilter.to ? `_to_${format(dateFilter.to, "yyyy-MM-dd")}` : ""}`
-      : "Full_History";
-    exportToCSV(`Tanika_Sales_Data_${dateStr}.csv`, rows);
-    toast.success("Sales data CSV downloaded.");
   };
 
   return (
@@ -350,21 +317,6 @@ export function ReportsDashboard() {
                 <div className="text-left">
                   <p className="font-bold text-xs">Sales Details (PDF)</p>
                   <p className="text-[9px] text-muted-foreground">Printable transaction log</p>
-                </div>
-              </Button>
-
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 h-12 rounded-xl text-sm"
-                onClick={exportSalesCSV}
-                disabled={loadingSales || isExporting}
-              >
-                <div className="p-2 bg-orange-500/10 rounded-lg text-orange-500">
-                  <Download className="w-4 h-4" />
-                </div>
-                <div className="text-left">
-                  <p className="font-bold text-xs">Sales Details (Excel/CSV)</p>
-                  <p className="text-[9px] text-muted-foreground">Raw data by salesperson 1 & 2</p>
                 </div>
               </Button>
             </div>

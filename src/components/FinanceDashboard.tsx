@@ -100,33 +100,81 @@ export function FinanceDashboard() {
         window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
     };
 
+    const drawPDFHeader = (doc: jsPDF, title: string) => {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(28);
+        doc.setTextColor(180, 20, 20);
+        doc.text("TANIKA LIQUOR", 14, 25);
+        doc.setFontSize(12);
+        doc.setTextColor(80);
+        doc.text(title, 14, 34);
+        doc.setDrawColor(180, 20, 20);
+        doc.setLineWidth(1);
+        doc.line(14, 38, 196, 38);
+        doc.setFontSize(9);
+        doc.setTextColor(120);
+        doc.text(`Generated: ${format(new Date(), "PPpp")}`, 14, 45);
+    };
+
     const exportPendingCredits = () => {
-        const rows = [["Customer Name", "Phone", "Amount (ETB)", "Due Date", "Status"]];
-        pendingCredits.forEach(c => {
-            rows.push([
-                c.customer_name,
-                c.customer_phone || 'N/A',
-                c.amount,
-                format(new Date(c.due_date), "MMM dd, yyyy"),
-                c.status
-            ]);
-        });
-        exportToCSV(`pending_credits_${format(new Date(), 'yyyy-MM-dd')}.csv`, rows);
-        toast.success("Pending Credits exported");
+        if (pendingCredits.length === 0) {
+            toast.error("No pending credits to export.");
+            return;
+        }
+        try {
+            const doc = new jsPDF();
+            drawPDFHeader(doc, "Pending Credits Report");
+            
+            autoTable(doc, {
+                head: [["Customer Name", "Phone", "Amount (ETB)", "Due Date", "Status"]],
+                body: pendingCredits.map(c => [
+                    c.customer_name,
+                    c.customer_phone || '-',
+                    Number(c.amount).toFixed(2),
+                    format(new Date(c.due_date), "MMM dd, yyyy"),
+                    c.status.toUpperCase()
+                ]),
+                startY: 55,
+                theme: "grid",
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [180, 20, 20], textColor: 255, fontStyle: 'bold' },
+            });
+
+            doc.save(`Tanika_Pending_Credits_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+            toast.success("Pending Credits PDF downloaded");
+        } catch (error) {
+            toast.error("Failed to generate PDF");
+        }
     };
 
     const exportCashFlow = () => {
-        const rows = [["Date", "Type", "Description", "Amount (ETB)"]];
-        cashFlow.forEach(entry => {
-            rows.push([
-                format(new Date(entry.created_at), "yyyy-MM-dd HH:mm"),
-                entry.type,
-                entry.description || '',
-                entry.amount
-            ]);
-        });
-        exportToCSV(`cash_flow_${format(new Date(), 'yyyy-MM-dd')}.csv`, rows);
-        toast.success("Cash Flow exported");
+        if (cashFlow.length === 0) {
+            toast.error("No cash flow data to export.");
+            return;
+        }
+        try {
+            const doc = new jsPDF();
+            drawPDFHeader(doc, "Recent Cash Flow Report");
+            
+            autoTable(doc, {
+                head: [["Date", "Type", "Description", "Amount (ETB)"]],
+                body: cashFlow.map(entry => [
+                    format(new Date(entry.created_at), "MMM dd, yyyy HH:mm"),
+                    entry.type.toUpperCase(),
+                    entry.description || '-',
+                    Number(entry.amount).toFixed(2)
+                ]),
+                startY: 55,
+                theme: "grid",
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [180, 20, 20], textColor: 255, fontStyle: 'bold' },
+            });
+
+            doc.save(`Tanika_Cash_Flow_${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+            toast.success("Cash Flow PDF downloaded");
+        } catch (error) {
+            toast.error("Failed to generate PDF");
+        }
     };
 
     return (
