@@ -150,40 +150,56 @@ export function ReportsDashboard() {
       drawPDFHeader(doc, "Salesperson Comparison Report");
 
       // Summary table
-      let currentY = 55;
       autoTable(doc, {
         head: [["Salesperson", "Total Revenue (ETB)", "Items Sold"]],
         body: salesDataBySP.map(sp => [sp.name, sp.revenue.toFixed(2), sp.items.toString()]),
-        startY: currentY,
+        startY: 55,
         theme: "grid",
         styles: { fontSize: 10 },
         headStyles: { fillColor: [180, 20, 20], textColor: 255, fontStyle: "bold" },
-        didDrawPage: (data: any) => { currentY = data.cursor.y; },
       });
 
-      // Per-salesperson breakdown
-      [1, 2].forEach((spNum) => {
-        const spName = spNum === 1 ? (spNames?.sp1 || "Salesperson 1") : (spNames?.sp2 || "Salesperson 2");
-        const spSales = (sales as any[]).filter(s => !s.is_reversed && s.salesperson_number === spNum);
-        if (spSales.length === 0) return;
-
-        const fillColor: [number, number, number] = spNum === 1 ? [249, 115, 22] : [59, 130, 246];
+      // Salesperson 1 breakdown
+      const sp1Name = spNames?.sp1 || "Salesperson 1";
+      const sp1Sales = (sales as any[]).filter(s => !s.is_reversed && s.salesperson_number === 1);
+      if (sp1Sales.length > 0) {
+        const y1 = (doc as any).lastAutoTable.finalY + 12;
         autoTable(doc, {
-          head: [[`${spName} — Individual Sales`, "Product", "Qty", "Total (ETB)", "Date"]],
-          body: spSales.map((s: any) => [
+          head: [[`${sp1Name} — Individual Transactions`, "Product", "Qty", "Total (ETB)", "Date"]],
+          body: sp1Sales.map((s: any) => [
             "",
             s.product?.name || "Unknown",
             s.quantity.toString(),
             (s.quantity * s.price_at_sale).toFixed(2),
             format(new Date(s.sale_date), "MMM dd, yyyy HH:mm"),
           ]),
-          startY: currentY + 12,
+          startY: y1,
           theme: "striped",
           styles: { fontSize: 8 },
-          headStyles: { fillColor, textColor: 255, fontStyle: "bold" },
-          didDrawPage: (data: any) => { currentY = data.cursor.y; },
+          headStyles: { fillColor: [249, 115, 22], textColor: 255, fontStyle: "bold" },
         });
-      });
+      }
+
+      // Salesperson 2 breakdown
+      const sp2Name = spNames?.sp2 || "Salesperson 2";
+      const sp2Sales = (sales as any[]).filter(s => !s.is_reversed && s.salesperson_number === 2);
+      if (sp2Sales.length > 0) {
+        const y2 = (doc as any).lastAutoTable.finalY + 12;
+        autoTable(doc, {
+          head: [[`${sp2Name} — Individual Transactions`, "Product", "Qty", "Total (ETB)", "Date"]],
+          body: sp2Sales.map((s: any) => [
+            "",
+            s.product?.name || "Unknown",
+            s.quantity.toString(),
+            (s.quantity * s.price_at_sale).toFixed(2),
+            format(new Date(s.sale_date), "MMM dd, yyyy HH:mm"),
+          ]),
+          startY: y2,
+          theme: "striped",
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: "bold" },
+        });
+      }
 
       doc.save(`Tanika_Salesperson_Comparison_${format(new Date(), "yyyy-MM-dd")}.pdf`);
       toast.success("Salesperson Comparison PDF downloaded.");
