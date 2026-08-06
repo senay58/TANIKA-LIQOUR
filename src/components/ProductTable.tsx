@@ -1,5 +1,5 @@
 import { Pencil, Trash2, ArrowUpDown, ShoppingCart } from "lucide-react";
-import { Product, categoryEmojis } from "@/lib/inventory-data";
+import { Product } from "@/lib/inventory-data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import React, { useState } from "react";
@@ -77,9 +77,7 @@ export function ProductTable({ products, onEdit, onDelete, onSell }: ProductTabl
                     </div>
                   </td>
                   <td className="px-3 py-3">
-                    <span className="text-sm">
-                      {product.categoryEmoji || (categoryEmojis as any)[product.category]} {product.category}
-                    </span>
+                    <span className="text-sm">{product.category}</span>
                   </td>
                   <td className="hidden md:table-cell px-3 py-3 text-sm text-muted-foreground">ETB {product.priceIn.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   <td className="px-3 py-3 text-sm font-medium">ETB {product.priceOut.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>

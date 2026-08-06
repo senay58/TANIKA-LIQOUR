@@ -1,23 +1,25 @@
-import { FileText, Download, FileDigit, Calendar as CalIcon, TrendingUp } from "lucide-react";
+import { FileText, Download, FileDigit, Calendar as CalIcon, TrendingUp, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useProducts, useSalesHistory, useSalespersonNames } from "@/hooks/useInventory";
+import { useProducts, useSalesHistory, useSalespersonNames, useCredits, useCashFlow } from "@/hooks/useInventory";
 import { useState, useMemo } from "react";
 import { format, isWithinInterval, startOfDay, endOfDay, startOfWeek, startOfMonth } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, LineChart, Line, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { SalesHistory } from "@/components/SalesHistory";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
-import { cn, exportToCSV } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 export function ReportsDashboard() {
   const { data: products = [], isLoading: loadingProducts } = useProducts();
   const { data: sales = [], isLoading: loadingSales } = useSalesHistory();
   const { data: spNames } = useSalespersonNames();
+  const { data: credits = [] } = useCredits();
+  const { data: cashFlow = [] } = useCashFlow();
   const [isExporting, setIsExporting] = useState(false);
   const [dateFilter, setDateFilter] = useState<DateRange | undefined>(undefined);
   const [graphTimeFrame, setGraphTimeFrame] = useState<"all" | "today" | "week" | "month">("all");
@@ -51,81 +53,71 @@ export function ReportsDashboard() {
     ];
   }, [sales, graphTimeFrame, spNames]);
 
-  // ── PDF Exports ──────────────────────────────────────────────────────────────
+  // ── Shared PDF Header ──────────────────────────────────────────────────────
   const drawPDFHeader = (doc: jsPDF, title: string) => {
-    // Big Red Logo
+    const pageWidth = doc.internal.pageSize.getWidth();
     doc.setFont("helvetica", "bold");
     doc.setFontSize(28);
-    doc.setTextColor(180, 20, 20); // Branded Red
+    doc.setTextColor(180, 20, 20);
     doc.text("TANIKA LIQUOR", 14, 25);
-
-    // Subtitle / Title
     doc.setFontSize(12);
     doc.setTextColor(80);
     doc.text(title, 14, 34);
-
-    // Decorative line
     doc.setDrawColor(180, 20, 20);
     doc.setLineWidth(1);
-    doc.line(14, 38, 196, 38);
-
+    doc.line(14, 38, pageWidth - 14, 38);
     doc.setFontSize(9);
     doc.setTextColor(120);
     doc.text(`Generated: ${format(new Date(), "PPpp")}`, 14, 45);
   };
 
+  // 1 ── Total Inventory PDF ─────────────────────────────────────────────────
   const exportInventoryPDF = () => {
     if (products.length === 0) { toast.error("No inventory data to export."); return; }
     setIsExporting(true);
     try {
       const doc = new jsPDF();
       drawPDFHeader(doc, "Complete Inventory & Valuation Report");
-
       autoTable(doc, {
-        head: [["Product Name", "Brand", "Category", "Quantity", "Price In (ETB)", "Price Out (ETB)"]],
+        head: [["Product Name", "Brand", "Category", "Qty", "Price In (ETB)", "Price Out (ETB)"]],
         body: products.map((p) => [p.name, p.brand, p.category, p.quantity.toString(), p.priceIn.toFixed(2), p.priceOut.toFixed(2)]),
         startY: 55,
         theme: "grid",
         styles: { fontSize: 9 },
-        headStyles: { fillColor: [180, 20, 20], textColor: 255, fontStyle: 'bold' },
+        headStyles: { fillColor: [180, 20, 20], textColor: 255, fontStyle: "bold" },
       });
-
       doc.save(`Tanika_Inventory_${format(new Date(), "yyyy-MM-dd")}.pdf`);
-      toast.success("Branded inventory report downloaded.");
-    } catch (err) {
-      toast.error("Failed to generate PDF.");
-    } finally {
-      setIsExporting(false);
-    }
+      toast.success("Inventory PDF downloaded.");
+    } catch { toast.error("Failed to generate PDF."); }
+    finally { setIsExporting(false); }
   };
 
-    const exportSalesPDF = () => {
+  // 2 ── Sales Detail PDF ────────────────────────────────────────────────────
+  const exportSalesPDF = () => {
     let salesToExport = sales as any[];
     if (dateFilter?.from) {
       salesToExport = sales.filter((s: any) => {
         const saleDate = new Date(s.sale_date);
-        const start = startOfDay(dateFilter.from!);
-        const end = dateFilter.to ? endOfDay(dateFilter.to) : endOfDay(dateFilter.from!);
-        return isWithinInterval(saleDate, { start, end });
+        return isWithinInterval(saleDate, {
+          start: startOfDay(dateFilter.from!),
+          end: dateFilter.to ? endOfDay(dateFilter.to) : endOfDay(dateFilter.from!),
+        });
       });
     }
-    if (salesToExport.length === 0) { toast.error("No sales data for the selected date range."); return; }
-
+    if (salesToExport.length === 0) { toast.error("No sales data for the selected range."); return; }
     setIsExporting(true);
     try {
       const doc = new jsPDF("landscape");
       const dateStr = dateFilter?.from
         ? `${format(dateFilter.from, "PPP")}${dateFilter.to ? ` - ${format(dateFilter.to, "PPP")}` : ""}`
         : "Full History";
-
       drawPDFHeader(doc, `Sales Details Report (${dateStr})`);
-
       autoTable(doc, {
         head: [["Date", "Product", "Category", "Qty", "Price", "Total (ETB)", "Payment", "Bank", "Ref", "Customer", "Salesperson"]],
         body: salesToExport.map((s: any) => [
           format(new Date(s.sale_date), "MMM dd, yyyy HH:mm"),
           s.product?.name || "Unknown",
-          s.product?.category || "Unknown",
+          s.product?.category || "-",
           s.quantity.toString(),
           Number(s.price_at_sale).toFixed(2),
           (s.quantity * s.price_at_sale).toFixed(2),
@@ -138,30 +130,121 @@ export function ReportsDashboard() {
         startY: 55,
         theme: "grid",
         styles: { fontSize: 8 },
-        headStyles: { fillColor: [180, 20, 20], textColor: 255, fontStyle: 'bold' },
-        columnStyles: { 
-            0: { cellWidth: 30 }, 
-            1: { cellWidth: 35 }, 
-            9: { cellWidth: 25 } 
-        },
+        headStyles: { fillColor: [180, 20, 20], textColor: 255, fontStyle: "bold" },
+        columnStyles: { 0: { cellWidth: 30 }, 1: { cellWidth: 35 }, 9: { cellWidth: 25 } },
       });
-
       const fileName = dateFilter?.from
         ? `Tanika_Sales_${format(dateFilter.from, "yyyy-MM-dd")}${dateFilter.to ? `_to_${format(dateFilter.to, "yyyy-MM-dd")}` : ""}.pdf`
         : `Tanika_Sales_Full_Report_${format(new Date(), "yyyy-MM-dd")}.pdf`;
       doc.save(fileName);
-      toast.success("Detailed Sales PDF downloaded.");
-    } catch (err) {
-      toast.error("Failed to generate PDF.");
-    } finally {
-      setIsExporting(false);
-    }
+      toast.success("Sales Details PDF downloaded.");
+    } catch { toast.error("Failed to generate PDF."); }
+    finally { setIsExporting(false); }
+  };
+
+  // 3 ── Salesperson Comparison PDF ──────────────────────────────────────────
+  const exportSalespersonPDF = () => {
+    setIsExporting(true);
+    try {
+      const doc = new jsPDF();
+      drawPDFHeader(doc, "Salesperson Comparison Report");
+
+      // Summary table
+      autoTable(doc, {
+        head: [["Salesperson", "Total Revenue (ETB)", "Items Sold"]],
+        body: salesDataBySP.map(sp => [sp.name, sp.revenue.toFixed(2), sp.items.toString()]),
+        startY: 55,
+        theme: "grid",
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [180, 20, 20], textColor: 255, fontStyle: "bold" },
+      });
+
+      // Per-salesperson breakdown
+      [1, 2].forEach((spNum) => {
+        const spName = spNum === 1 ? (spNames?.sp1 || "Salesperson 1") : (spNames?.sp2 || "Salesperson 2");
+        const spSales = (sales as any[]).filter(s => !s.is_reversed && s.salesperson_number === spNum);
+        if (spSales.length === 0) return;
+
+        (doc as any).autoTable({
+          head: [[`${spName} — Individual Sales`, "Product", "Qty", "Total (ETB)", "Date"]],
+          body: spSales.map((s: any) => [
+            "",
+            s.product?.name || "Unknown",
+            s.quantity.toString(),
+            (s.quantity * s.price_at_sale).toFixed(2),
+            format(new Date(s.sale_date), "MMM dd, yyyy HH:mm"),
+          ]),
+          startY: (doc as any).lastAutoTable.finalY + 12,
+          theme: "striped",
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: spNum === 1 ? [249, 115, 22] : [59, 130, 246], textColor: 255, fontStyle: "bold" },
+        });
+      });
+
+      doc.save(`Tanika_Salesperson_Comparison_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+      toast.success("Salesperson Comparison PDF downloaded.");
+    } catch { toast.error("Failed to generate PDF."); }
+    finally { setIsExporting(false); }
+  };
+
+  // 4 ── Pending Credits PDF ─────────────────────────────────────────────────
+  const exportCreditsPDF = () => {
+    const pending = (credits as any[]).filter(c => c.status === "pending");
+    if (pending.length === 0) { toast.error("No pending credits to export."); return; }
+    setIsExporting(true);
+    try {
+      const doc = new jsPDF();
+      drawPDFHeader(doc, "Pending Credits Report");
+      autoTable(doc, {
+        head: [["Customer Name", "Phone", "Amount (ETB)", "Due Date", "Status"]],
+        body: pending.map(c => [
+          c.customer_name,
+          c.customer_phone || "-",
+          Number(c.amount).toFixed(2),
+          format(new Date(c.due_date), "MMM dd, yyyy"),
+          c.status.toUpperCase(),
+        ]),
+        startY: 55,
+        theme: "grid",
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [180, 20, 20], textColor: 255, fontStyle: "bold" },
+      });
+      doc.save(`Tanika_Pending_Credits_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+      toast.success("Pending Credits PDF downloaded.");
+    } catch { toast.error("Failed to generate PDF."); }
+    finally { setIsExporting(false); }
+  };
+
+  // 5 ── Recent Cash Flow PDF ────────────────────────────────────────────────
+  const exportCashFlowPDF = () => {
+    if ((cashFlow as any[]).length === 0) { toast.error("No cash flow data to export."); return; }
+    setIsExporting(true);
+    try {
+      const doc = new jsPDF();
+      drawPDFHeader(doc, "Recent Cash Flow Report");
+      autoTable(doc, {
+        head: [["Date", "Type", "Description", "Amount (ETB)"]],
+        body: (cashFlow as any[]).map(entry => [
+          format(new Date(entry.created_at), "MMM dd, yyyy HH:mm"),
+          entry.type.toUpperCase(),
+          entry.description || "-",
+          Number(entry.amount).toFixed(2),
+        ]),
+        startY: 55,
+        theme: "grid",
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [180, 20, 20], textColor: 255, fontStyle: "bold" },
+      });
+      doc.save(`Tanika_Cash_Flow_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+      toast.success("Cash Flow PDF downloaded.");
+    } catch { toast.error("Failed to generate PDF."); }
+    finally { setIsExporting(false); }
   };
 
   return (
     <div className="relative space-y-6 pb-32 md:pb-24">
 
-      {/* ── Sales History (inline at top) ──────────────────────────── */}
+      {/* ── Sales History ──────────────────────────── */}
       <div className="bg-card/60 backdrop-blur-sm border border-border rounded-xl p-6 shadow-md">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-3 bg-primary/10 rounded-xl text-primary">
@@ -172,13 +255,10 @@ export function ReportsDashboard() {
             <p className="text-sm text-muted-foreground">Historical transaction log and performance insights.</p>
           </div>
         </div>
-
-        {/* The SalesHistory now has its own internal collapsible state by default */}
         <SalesHistory open={true} onOpenChange={() => { }} inline />
       </div>
 
-
-      {/* ── Salesperson Performance Graph (Admin only) ── */}
+      {/* ── Salesperson Performance Graph ── */}
       <div className="bg-card/60 backdrop-blur-sm border border-border rounded-xl p-6 shadow-md mt-6">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
@@ -203,8 +283,6 @@ export function ReportsDashboard() {
           </Select>
         </div>
 
-
-        {/* Summary stat pills */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           {salesDataBySP.map((sp) => (
             <div key={sp.name} className="rounded-xl p-5 border shadow-sm transition-all hover:shadow-md" style={{ borderColor: sp.color + "30", background: sp.color + "05" }}>
@@ -259,36 +337,28 @@ export function ReportsDashboard() {
               <Download className="w-6 h-6 text-primary-foreground" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[280px] p-2 bg-popover/90 backdrop-blur-xl border-border shadow-2xl rounded-2xl mb-4" align="end" side="top">
+          <PopoverContent className="w-[300px] p-2 bg-popover/90 backdrop-blur-xl border-border shadow-2xl rounded-2xl mb-4" align="end" side="top">
             <div className="p-3 border-b border-border/50 mb-1">
               <p className="text-sm font-bold text-foreground">Download Reports</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">Select a report type to export</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">All reports include Tanika Liquor header</p>
             </div>
 
             <div className="space-y-1">
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 h-12 rounded-xl text-sm"
-                onClick={exportInventoryPDF}
-                disabled={loadingProducts || isExporting}
-              >
-                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500">
-                  <FileDigit className="w-4 h-4" />
-                </div>
+              {/* 1. Total Inventory */}
+              <Button variant="ghost" className="w-full justify-start gap-3 h-12 rounded-xl text-sm" onClick={exportInventoryPDF} disabled={loadingProducts || isExporting}>
+                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500"><FileDigit className="w-4 h-4" /></div>
                 <div className="text-left">
                   <p className="font-bold text-xs">Total Inventory</p>
                   <p className="text-[9px] text-muted-foreground">Full stock & valuation report</p>
                 </div>
               </Button>
 
+              {/* Date filter for sales */}
               <div className="px-3 py-2">
-                <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Sales Report Filter</p>
+                <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-2">Sales Report — Filter by Date</p>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn("w-full justify-start text-left text-xs h-9 rounded-lg bg-background/50", !dateFilter && "text-muted-foreground")}
-                    >
+                    <Button variant="outline" className={cn("w-full justify-start text-left text-xs h-9 rounded-lg bg-background/50", !dateFilter && "text-muted-foreground")}>
                       <CalIcon className="mr-2 h-3.5 w-3.5" />
                       {dateFilter?.from ? (
                         dateFilter.to
@@ -305,18 +375,39 @@ export function ReportsDashboard() {
                 </Popover>
               </div>
 
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 h-12 rounded-xl text-sm"
-                onClick={exportSalesPDF}
-                disabled={loadingSales || isExporting}
-              >
-                <div className="p-2 bg-green-500/10 rounded-lg text-green-500">
-                  <FileDigit className="w-4 h-4" />
-                </div>
+              {/* 2. Sales Detail */}
+              <Button variant="ghost" className="w-full justify-start gap-3 h-12 rounded-xl text-sm" onClick={exportSalesPDF} disabled={loadingSales || isExporting}>
+                <div className="p-2 bg-green-500/10 rounded-lg text-green-500"><FileDigit className="w-4 h-4" /></div>
                 <div className="text-left">
-                  <p className="font-bold text-xs">Sales Details (PDF)</p>
-                  <p className="text-[9px] text-muted-foreground">Printable transaction log</p>
+                  <p className="font-bold text-xs">Sales Detail</p>
+                  <p className="text-[9px] text-muted-foreground">Full transaction log (landscape)</p>
+                </div>
+              </Button>
+
+              {/* 3. Salesperson Comparison */}
+              <Button variant="ghost" className="w-full justify-start gap-3 h-12 rounded-xl text-sm" onClick={exportSalespersonPDF} disabled={loadingSales || isExporting}>
+                <div className="p-2 bg-orange-500/10 rounded-lg text-orange-500"><Users className="w-4 h-4" /></div>
+                <div className="text-left">
+                  <p className="font-bold text-xs">Salesperson Comparison</p>
+                  <p className="text-[9px] text-muted-foreground">Revenue breakdown by staff member</p>
+                </div>
+              </Button>
+
+              {/* 4. Pending Credits */}
+              <Button variant="ghost" className="w-full justify-start gap-3 h-12 rounded-xl text-sm" onClick={exportCreditsPDF} disabled={isExporting}>
+                <div className="p-2 bg-red-500/10 rounded-lg text-red-500"><FileText className="w-4 h-4" /></div>
+                <div className="text-left">
+                  <p className="font-bold text-xs">Pending Credits</p>
+                  <p className="text-[9px] text-muted-foreground">All outstanding customer credits</p>
+                </div>
+              </Button>
+
+              {/* 5. Recent Cash Flow */}
+              <Button variant="ghost" className="w-full justify-start gap-3 h-12 rounded-xl text-sm" onClick={exportCashFlowPDF} disabled={isExporting}>
+                <div className="p-2 bg-purple-500/10 rounded-lg text-purple-500"><Download className="w-4 h-4" /></div>
+                <div className="text-left">
+                  <p className="font-bold text-xs">Recent Cash Flow</p>
+                  <p className="text-[9px] text-muted-foreground">Income & expenses log</p>
                 </div>
               </Button>
             </div>
@@ -326,4 +417,3 @@ export function ReportsDashboard() {
     </div>
   );
 }
-

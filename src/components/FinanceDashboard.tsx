@@ -242,14 +242,9 @@ export function FinanceDashboard() {
                 {/* Pending Credits */}
                 <Card className="glass-card h-fit">
                     <CardHeader>
-                        <CardTitle className="text-lg flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Clock className="w-5 h-5 text-red-400" />
-                                Pending Credits
-                            </div>
-                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={exportPendingCredits}>
-                                <Download className="w-3 h-3" /> Export
-                            </Button>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <Clock className="w-5 h-5 text-red-400" />
+                            Pending Credits
                         </CardTitle>
                         <CardDescription>Track customers who took items on credit</CardDescription>
                     </CardHeader>
@@ -314,14 +309,9 @@ export function FinanceDashboard() {
                 {/* Recent Cash Flow */}
                 <Card className="glass-card">
                     <CardHeader>
-                        <CardTitle className="text-lg flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Wallet className="w-5 h-5 text-blue-400" />
-                                Recent Cash Flow
-                            </div>
-                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={exportCashFlow}>
-                                <Download className="w-3 h-3" /> Export
-                            </Button>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <Wallet className="w-5 h-5 text-blue-400" />
+                            Recent Cash Flow
                         </CardTitle>
                         <CardDescription>Income and expenses tracking</CardDescription>
                     </CardHeader>

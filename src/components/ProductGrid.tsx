@@ -1,4 +1,4 @@
-import { Product, categoryEmojis } from "@/lib/inventory-data";
+import { Product } from "@/lib/inventory-data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Pencil, Trash2, PackageOpen } from "lucide-react";
@@ -28,9 +28,7 @@ export function ProductGrid({ products, onEdit, onDelete, onSell, hidePriceIn = 
                 >
                     {/* Header / Category */}
                     <div className="px-4 py-3 bg-secondary/30 flex justify-between items-center border-b border-border/50">
-                        <span className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                            {product.categoryEmoji || (categoryEmojis as any)[product.category]} {product.category}
-                        </span>
+                        <span className="text-xs font-medium text-muted-foreground">{product.category}</span>
                         {stockStatus(product)}
                     </div>
 
