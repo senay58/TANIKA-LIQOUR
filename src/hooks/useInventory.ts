@@ -14,21 +14,28 @@ export function useCategories() {
     });
 }
 
-export function useAddCategory() {
+export function useSaveCategory() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ name, emoji }: { name: string; emoji: string }) => {
-            const { data, error } = await supabase.from('categories').insert([{ name, emoji }]).select().single();
-            if (error) {
-                if (error.code === '23505') {
-                    throw new Error(`Category '${name}' already exists.`);
+        mutationFn: async ({ name, emoji, id }: { name: string; emoji?: string; id?: string }) => {
+            if (id) {
+                const { data, error } = await supabase.from('categories').update({ name, emoji: emoji || '' }).eq('id', id).select().single();
+                if (error) throw new Error(error.message || "Failed to update category");
+                return data;
+            } else {
+                const { data, error } = await supabase.from('categories').insert([{ name, emoji: emoji || '' }]).select().single();
+                if (error) {
+                    if (error.code === '23505') {
+                        throw new Error(`Category '${name}' already exists.`);
+                    }
+                    throw new Error(error.message || "Failed to add category");
                 }
-                throw new Error(error.message || "Failed to add category");
+                return data;
             }
-            return data;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['categories'] });
+            queryClient.invalidateQueries({ queryKey: ['products'] });
         },
     });
 }

@@ -12,7 +12,7 @@ import { SalesHistory } from "@/components/SalesHistory";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, exportToCSV } from "@/lib/utils";
 
 export function ReportsDashboard() {
   const { data: products = [], isLoading: loadingProducts } = useProducts();
@@ -153,6 +153,42 @@ export function ReportsDashboard() {
     } finally {
       setIsExporting(false);
     }
+  };
+
+  const exportSalesCSV = () => {
+    let salesToExport = sales as any[];
+    if (dateFilter?.from) {
+      salesToExport = sales.filter((s: any) => {
+        const saleDate = new Date(s.sale_date);
+        const start = startOfDay(dateFilter.from!);
+        const end = dateFilter.to ? endOfDay(dateFilter.to) : endOfDay(dateFilter.from!);
+        return isWithinInterval(saleDate, { start, end });
+      });
+    }
+    if (salesToExport.length === 0) { toast.error("No sales data for the selected date range."); return; }
+
+    const rows = [["Date", "Product Name", "Category", "Quantity", "Price (ETB)", "Total (ETB)", "Payment Method", "Bank", "Ref", "Customer", "Salesperson"]];
+    salesToExport.forEach((s: any) => {
+      rows.push([
+        format(new Date(s.sale_date), "yyyy-MM-dd HH:mm:ss"),
+        s.product?.name || "Unknown",
+        s.product?.category || "Unknown",
+        s.quantity,
+        s.price_at_sale,
+        (s.quantity * s.price_at_sale).toFixed(2),
+        s.payment_method,
+        s.bank_name || '',
+        s.reference_number || '',
+        s.customer_info || '',
+        s.salesperson_number === 1 ? (spNames?.sp1 || "Salesperson 1") : (s.salesperson_number === 2 ? (spNames?.sp2 || "Salesperson 2") : "N/A")
+      ]);
+    });
+
+    const dateStr = dateFilter?.from
+      ? `${format(dateFilter.from, "yyyy-MM-dd")}${dateFilter.to ? `_to_${format(dateFilter.to, "yyyy-MM-dd")}` : ""}`
+      : "Full_History";
+    exportToCSV(`Tanika_Sales_Data_${dateStr}.csv`, rows);
+    toast.success("Sales data CSV downloaded.");
   };
 
   return (
@@ -312,8 +348,23 @@ export function ReportsDashboard() {
                   <FileDigit className="w-4 h-4" />
                 </div>
                 <div className="text-left">
-                  <p className="font-bold text-xs">Sales Details</p>
-                  <p className="text-[9px] text-muted-foreground">Detailed transaction log export</p>
+                  <p className="font-bold text-xs">Sales Details (PDF)</p>
+                  <p className="text-[9px] text-muted-foreground">Printable transaction log</p>
+                </div>
+              </Button>
+
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 h-12 rounded-xl text-sm"
+                onClick={exportSalesCSV}
+                disabled={loadingSales || isExporting}
+              >
+                <div className="p-2 bg-orange-500/10 rounded-lg text-orange-500">
+                  <Download className="w-4 h-4" />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-xs">Sales Details (Excel/CSV)</p>
+                  <p className="text-[9px] text-muted-foreground">Raw data by salesperson 1 & 2</p>
                 </div>
               </Button>
             </div>

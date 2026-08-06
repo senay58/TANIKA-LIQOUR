@@ -3,13 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Wallet, ArrowUpCircle, ArrowDownCircle, Clock, CheckCircle2, Phone, User, Calendar, PlusCircle } from "lucide-react";
+import { Wallet, ArrowUpCircle, ArrowDownCircle, Clock, CheckCircle2, Phone, User, Calendar, PlusCircle, Download } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { exportToCSV } from "@/lib/utils";
 
 export function FinanceDashboard() {
     const { data: summary } = useFinanceSummary();
@@ -99,6 +100,35 @@ export function FinanceDashboard() {
         window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
     };
 
+    const exportPendingCredits = () => {
+        const rows = [["Customer Name", "Phone", "Amount (ETB)", "Due Date", "Status"]];
+        pendingCredits.forEach(c => {
+            rows.push([
+                c.customer_name,
+                c.customer_phone || 'N/A',
+                c.amount,
+                format(new Date(c.due_date), "MMM dd, yyyy"),
+                c.status
+            ]);
+        });
+        exportToCSV(`pending_credits_${format(new Date(), 'yyyy-MM-dd')}.csv`, rows);
+        toast.success("Pending Credits exported");
+    };
+
+    const exportCashFlow = () => {
+        const rows = [["Date", "Type", "Description", "Amount (ETB)"]];
+        cashFlow.forEach(entry => {
+            rows.push([
+                format(new Date(entry.created_at), "yyyy-MM-dd HH:mm"),
+                entry.type,
+                entry.description || '',
+                entry.amount
+            ]);
+        });
+        exportToCSV(`cash_flow_${format(new Date(), 'yyyy-MM-dd')}.csv`, rows);
+        toast.success("Cash Flow exported");
+    };
+
     return (
         <div className="space-y-6">
             {/* Top Cards */}
@@ -164,9 +194,14 @@ export function FinanceDashboard() {
                 {/* Pending Credits */}
                 <Card className="glass-card h-fit">
                     <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                            <Clock className="w-5 h-5 text-red-400" />
-                            Pending Credits
+                        <CardTitle className="text-lg flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Clock className="w-5 h-5 text-red-400" />
+                                Pending Credits
+                            </div>
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={exportPendingCredits}>
+                                <Download className="w-3 h-3" /> Export
+                            </Button>
                         </CardTitle>
                         <CardDescription>Track customers who took items on credit</CardDescription>
                     </CardHeader>
@@ -231,9 +266,14 @@ export function FinanceDashboard() {
                 {/* Recent Cash Flow */}
                 <Card className="glass-card">
                     <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                            <Wallet className="w-5 h-5 text-blue-400" />
-                            Recent Cash Flow
+                        <CardTitle className="text-lg flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Wallet className="w-5 h-5 text-blue-400" />
+                                Recent Cash Flow
+                            </div>
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={exportCashFlow}>
+                                <Download className="w-3 h-3" /> Export
+                            </Button>
                         </CardTitle>
                         <CardDescription>Income and expenses tracking</CardDescription>
                     </CardHeader>

@@ -16,7 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     useSalespersonNames, useProducts, useBrands, useCategories,
-    useSaveProduct, useDeleteProduct, useSaveBrand, useDeleteBrand
+    useSaveProduct, useDeleteProduct, useSaveBrand, useDeleteBrand,
+    useSaveCategory, useDeleteCategory
 } from "@/hooks/useInventory";
 import { useQueryClient } from "@tanstack/react-query";
 import { Product } from "@/lib/inventory-data";
@@ -36,11 +37,14 @@ function ProductsPanel() {
     const deleteProductMutation = useDeleteProduct();
     const saveBrandMutation    = useSaveBrand();
     const deleteBrandMutation  = useDeleteBrand();
+    const saveCategoryMutation = useSaveCategory();
+    const deleteCategoryMutation = useDeleteCategory();
 
-    // Sub-view: "products" | "brands" | "add-product" | "edit-product" | "add-brand" | "edit-brand"
-    const [subView, setSubView] = useState<"products" | "brands" | "add-product" | "edit-product" | "add-brand" | "edit-brand">("products");
+    // Sub-view
+    const [subView, setSubView] = useState<"products" | "brands" | "categories" | "add-product" | "edit-product" | "add-brand" | "edit-brand" | "add-category" | "edit-category">("products");
     const [searchProducts, setSearchProducts] = useState("");
     const [searchBrands, setSearchBrands] = useState("");
+    const [searchCategories, setSearchCategories] = useState("");
 
     // Product form
     const [pId, setPId]           = useState<string | null>(null);
@@ -54,6 +58,10 @@ function ProductsPanel() {
     // Brand form
     const [bId, setBId]     = useState<string | null>(null);
     const [bName, setBName] = useState("");
+
+    // Category form
+    const [cId, setCId] = useState<string | null>(null);
+    const [cName, setCName] = useState("");
 
     function resetProductForm() {
         setPId(null); setPName(""); setPBrandId(""); setPCategory(""); setPPriceOut(""); setPMinStock(""); setPVolume("750ml");
@@ -69,6 +77,11 @@ function ProductsPanel() {
     function openEditBrand(b: any) {
         setBId(b.id); setBName(b.name);
         setSubView("edit-brand");
+    }
+
+    function openEditCategory(c: any) {
+        setCId(c.id); setCName(c.name);
+        setSubView("edit-category");
     }
 
     const handleProductSubmit = async () => {
@@ -119,12 +132,33 @@ function ProductsPanel() {
         } catch (e: any) { toast.error(e.message || "Cannot delete — brand is in use"); }
     };
 
+    const handleCategorySubmit = async () => {
+        if (!cName.trim()) { toast.error("Category name required"); return; }
+        try {
+            await saveCategoryMutation.mutateAsync({ name: cName.trim(), id: cId || undefined });
+            toast.success(`Category "${cName}" ${cId ? "updated" : "created"}!`);
+            setCId(null); setCName("");
+            setSubView("categories");
+        } catch (e: any) { toast.error(e.message || "Failed to save category"); }
+    };
+
+    const handleDeleteCategory = async (id: string, name: string) => {
+        if (!confirm(`Delete category "${name}"? Products using it may break.`)) return;
+        try {
+            await deleteCategoryMutation.mutateAsync(id);
+            toast.success("Category deleted");
+        } catch (e: any) { toast.error(e.message || "Cannot delete — category is in use"); }
+    };
+
     const filteredProducts = products.filter(p =>
         p.name.toLowerCase().includes(searchProducts.toLowerCase()) ||
         p.brand.toLowerCase().includes(searchProducts.toLowerCase())
     );
     const filteredBrands = brands.filter((b: any) =>
         b.name.toLowerCase().includes(searchBrands.toLowerCase())
+    );
+    const filteredCategories = categories.filter((c: any) =>
+        c.name.toLowerCase().includes(searchCategories.toLowerCase())
     );
 
     // ── Sub-views ──
@@ -226,6 +260,36 @@ function ProductsPanel() {
         );
     }
 
+    if (subView === "add-category" || subView === "edit-category") {
+        return (
+            <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                    <Button variant="ghost" size="sm" onClick={() => { setCId(null); setCName(""); setSubView("categories"); }} className="text-muted-foreground px-2">
+                        ← Back
+                    </Button>
+                    <h3 className="font-semibold text-sm">{cId ? "Edit Category" : "Add New Category"}</h3>
+                </div>
+                <div>
+                    <Label className="text-xs mb-1 block">Category Name *</Label>
+                    <Input
+                        value={cName}
+                        onChange={e => setCName(e.target.value)}
+                        className="bg-secondary h-10"
+                        placeholder="e.g. Whisky"
+                        autoFocus
+                        onKeyDown={e => e.key === "Enter" && handleCategorySubmit()}
+                    />
+                </div>
+                <div className="flex gap-2 pt-2">
+                    <Button variant="outline" className="flex-1" onClick={() => { setCId(null); setCName(""); setSubView("categories"); }}>Cancel</Button>
+                    <Button className="flex-1" onClick={handleCategorySubmit} disabled={saveCategoryMutation.isPending}>
+                        {saveCategoryMutation.isPending ? "Saving..." : cId ? "Update Category" : "Create Category"}
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
     // ── Products / Brands list toggle ──
     return (
         <div className="space-y-3">
@@ -246,6 +310,14 @@ function ProductsPanel() {
                     }`}
                 >
                     🏷️ Brands ({brands.length})
+                </button>
+                <button
+                    onClick={() => setSubView("categories")}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                        subView === "categories" ? "bg-primary text-primary-foreground" : "bg-secondary hover:bg-secondary/80 text-muted-foreground"
+                    }`}
+                >
+                    📁 Categories ({categories.length})
                 </button>
             </div>
 
@@ -323,6 +395,47 @@ function ProductsPanel() {
                                     </button>
                                     <button
                                         onClick={() => handleDeleteBrand(b.id, b.name)}
+                                        className="p-1.5 rounded text-destructive hover:bg-destructive/10"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
+
+            {/* ── CATEGORIES LIST ── */}
+            {subView === "categories" && (
+                <>
+                    <div className="flex gap-2">
+                        <Input
+                            value={searchCategories}
+                            onChange={e => setSearchCategories(e.target.value)}
+                            placeholder="Search categories..."
+                            className="bg-secondary h-9 text-sm"
+                        />
+                        <Button size="sm" onClick={() => { setCId(null); setCName(""); setSubView("add-category"); }} className="shrink-0 h-9">
+                            <PlusCircle className="h-4 w-4 mr-1" /> Add
+                        </Button>
+                    </div>
+                    <div className="overflow-y-auto space-y-1.5 pr-0.5" style={{ maxHeight: "260px" }}>
+                        {filteredCategories.length === 0 && (
+                            <p className="text-center text-sm text-muted-foreground py-8">No categories found.</p>
+                        )}
+                        {filteredCategories.map((c: any) => (
+                            <div key={c.id} className="flex items-center justify-between bg-secondary/60 rounded-lg px-3 py-2.5 group">
+                                <p className="text-sm font-medium">{c.name}</p>
+                                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={() => openEditCategory(c)}
+                                        className="p-1.5 rounded text-blue-400 hover:bg-blue-500/10"
+                                    >
+                                        <Edit2 className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteCategory(c.id, c.name)}
                                         className="p-1.5 rounded text-destructive hover:bg-destructive/10"
                                     >
                                         <Trash2 className="h-3.5 w-3.5" />
