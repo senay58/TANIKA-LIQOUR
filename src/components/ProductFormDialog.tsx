@@ -17,7 +17,7 @@ interface StockEntryDialogProps {
     editProductId?: string | null;
 }
 
-export function StockEntryDialog({ open, onOpenChange }: StockEntryDialogProps) {
+export function StockEntryDialog({ open, onOpenChange, editProductId }: StockEntryDialogProps) {
     const { data: products = [] } = useProducts();
     const saveStockMutation = useSaveStockEntry();
 
