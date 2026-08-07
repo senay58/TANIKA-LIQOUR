@@ -1,8 +1,10 @@
-import { Pencil, Trash2, ArrowUpDown, ShoppingCart } from "lucide-react";
+import { Pencil, Trash2, ArrowUpDown, ShoppingCart, ChevronDown, History } from "lucide-react";
 import { Product } from "@/lib/inventory-data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import React, { useState } from "react";
+import { useStockEntries } from "@/hooks/useInventory";
+import { format } from "date-fns";
 
 interface ProductTableProps {
   products: Product[];
@@ -12,6 +14,67 @@ interface ProductTableProps {
 }
 
 type SortField = "name" | "category" | "priceOut" | "quantity";
+
+// Expanded row component — fetches its own data only when opened
+function ExpandedProductRow({ product }: { product: Product }) {
+  const { data: entries = [], isLoading } = useStockEntries(product.id);
+
+  const totalCost = product.priceIn * product.quantity;
+  const totalValue = product.priceOut * product.quantity;
+
+  return (
+    <tr className="bg-secondary/20 border-b border-border/30">
+      <td colSpan={6} className="px-4 py-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Totals */}
+          <div className="flex gap-6 items-center">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Total Inventory Cost</p>
+              <p className="text-base font-bold text-foreground mt-0.5">
+                ETB {totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="w-px h-8 bg-border/50" />
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Total Possible Value</p>
+              <p className="text-base font-bold text-green-500 mt-0.5">
+                ETB {totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+            </div>
+          </div>
+
+          {/* Last 3 Price-In History */}
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex items-center gap-1 mb-2">
+              <History className="h-3 w-3" /> Last 3 Purchase Prices
+            </p>
+            {isLoading ? (
+              <p className="text-xs text-muted-foreground">Loading...</p>
+            ) : entries.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No restock history yet.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {entries.map((e: any, i: number) => (
+                  <div key={e.id} className="bg-secondary/60 border border-border/50 rounded-lg px-3 py-1.5 text-xs">
+                    <span className="text-muted-foreground">
+                      {format(new Date(e.created_at), "MMM dd, yyyy")}
+                    </span>
+                    <span className="mx-1.5 text-border">·</span>
+                    <span className="font-bold text-foreground">ETB {Number(e.price_in).toFixed(2)}</span>
+                    <span className="text-muted-foreground ml-1">× {e.quantity_added} units</span>
+                    {i === 0 && (
+                      <span className="ml-2 text-[9px] uppercase bg-primary/20 text-primary rounded px-1 py-0.5">Latest</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </td>
+    </tr>
+  );
+}
 
 export function ProductTable({ products, onEdit, onDelete, onSell }: ProductTableProps) {
   const [sortField, setSortField] = useState<SortField>("name");
@@ -55,7 +118,6 @@ export function ProductTable({ products, onEdit, onDelete, onSell }: ProductTabl
             <tr className="border-b border-border/50">
               <SortHeader field="name">Product</SortHeader>
               <SortHeader field="category">Category</SortHeader>
-              <th className="hidden md:table-cell px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Price In</th>
               <SortHeader field="priceOut">Price Out</SortHeader>
               <SortHeader field="quantity">Stock</SortHeader>
               <th className="hidden sm:table-cell px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
@@ -71,15 +133,17 @@ export function ProductTable({ products, onEdit, onDelete, onSell }: ProductTabl
                   onClick={() => setExpandedId(expandedId === product.id ? null : product.id)}
                 >
                   <td className="px-3 py-3">
-                    <div>
-                      <p className="font-medium text-sm">{product.name}</p>
-                      <p className="text-xs text-muted-foreground">{product.brand} · {product.volume}</p>
+                    <div className="flex items-center gap-2">
+                      <ChevronDown className={`h-3.5 w-3.5 text-muted-foreground transition-transform shrink-0 ${expandedId === product.id ? 'rotate-180' : ''}`} />
+                      <div>
+                        <p className="font-medium text-sm">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">{product.brand} · {product.volume}</p>
+                      </div>
                     </div>
                   </td>
                   <td className="px-3 py-3">
                     <span className="text-sm">{product.category}</span>
                   </td>
-                  <td className="hidden md:table-cell px-3 py-3 text-sm text-muted-foreground">ETB {product.priceIn.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   <td className="px-3 py-3 text-sm font-medium">ETB {product.priceOut.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                   <td className="px-3 py-3 text-sm font-medium">{product.quantity}</td>
                   <td className="hidden sm:table-cell px-3 py-3">{stockStatus(product)}</td>
@@ -107,13 +171,7 @@ export function ProductTable({ products, onEdit, onDelete, onSell }: ProductTabl
                   </td>
                 </tr>
                 {expandedId === product.id && (
-                  <tr className="bg-secondary/30 transition-all animate-in slide-in-from-top-2">
-                    <td colSpan={7} className="px-4 py-3 text-sm text-center font-medium opacity-90 delay-100">
-                      <span className="text-muted-foreground">Total Inventory Cost:</span> <span className="text-foreground mr-1">ETB {(product.priceIn * product.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                      <span className="mx-4 text-border opacity-50">|</span>
-                      <span className="text-muted-foreground">Total Possible Value:</span> <span className="text-[hsl(var(--revenue))]">ETB {(product.priceOut * product.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                    </td>
-                  </tr>
+                  <ExpandedProductRow product={product} />
                 )}
               </React.Fragment>
             ))}

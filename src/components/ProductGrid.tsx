@@ -48,13 +48,8 @@ export function ProductGrid({ products, onEdit, onDelete, onSell, hidePriceIn = 
                             </div>
                         </div>
 
-                        {/* Rollover exact costs (Hover state instead of expanded row) */}
-                        {!hidePriceIn && (
-                            <div className="mt-3 text-xs flex justify-between px-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <span className="text-muted-foreground">In: ETB {(product.priceIn * product.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                <span className="font-bold text-[hsl(var(--revenue))]">Out: ETB {(product.priceOut * product.quantity).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                            </div>
-                        )}
+
+
                     </div>
 
                     {/* Actions Footer */}

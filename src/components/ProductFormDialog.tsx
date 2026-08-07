@@ -62,6 +62,7 @@ export function StockEntryDialog({ open, onOpenChange, editProductId }: StockEnt
         try {
             await saveStockMutation.mutateAsync({
                 product_id: selectedProductId,
+                product_name: selectedProduct?.name || selectedProductId,
                 price_in: Number(priceIn),
                 quantity: Number(quantity),
             });

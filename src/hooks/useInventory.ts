@@ -203,8 +203,8 @@ export function useSaveProduct() {
 export function useSaveStockEntry() {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async ({ product_id, quantity, price_in }: { product_id: string; quantity: number; price_in: number }) => {
-            // This insert triggers `track_stock_entry_cash_flow` which updates the cash ledger and the product overall quantity.
+        mutationFn: async ({ product_id, product_name, quantity, price_in }: { product_id: string; product_name: string; quantity: number; price_in: number }) => {
+            // 1. Insert stock entry (triggers DB function to update quantity & cash ledger)
             const { data, error } = await supabase.from('stock_entries').insert([{
                 product_id,
                 quantity_added: quantity,
@@ -212,8 +212,17 @@ export function useSaveStockEntry() {
             }]).select().single();
             
             if (error) throw new Error(error.message);
-            
-            // Update the baseline price_in on the product for reference (optional, but good for UI)
+
+            // 2. Patch the cash_ledger description to include the real product name
+            //    The DB trigger writes the description first, then we overwrite it with a friendly name.
+            const friendlyDesc = `Restock: ${product_name} — ${quantity} units @ ETB ${price_in}`;
+            await supabase
+                .from('cash_ledger')
+                .update({ description: friendlyDesc })
+                .eq('reference_id', data.id)
+                .eq('type', 'restock');
+
+            // 3. Keep the baseline price_in on the product up to date
             await supabase.from('products').update({ price_in: price_in }).eq('id', product_id);
             
             return data;
@@ -222,6 +231,24 @@ export function useSaveStockEntry() {
             queryClient.invalidateQueries({ queryKey: ['products'] });
             queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
             queryClient.invalidateQueries({ queryKey: ['finance-summary'] });
+            queryClient.invalidateQueries({ queryKey: ['stock-entries'] });
+        },
+    });
+}
+
+export function useStockEntries(productId: string | null) {
+    return useQuery({
+        queryKey: ['stock-entries', productId],
+        enabled: !!productId,
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('stock_entries')
+                .select('*')
+                .eq('product_id', productId!)
+                .order('created_at', { ascending: false })
+                .limit(3);
+            if (error) throw error;
+            return data;
         },
     });
 }
