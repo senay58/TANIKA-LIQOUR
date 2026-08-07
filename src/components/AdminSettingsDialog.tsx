@@ -340,18 +340,15 @@ function ProductsPanel() {
                             <p className="text-center text-sm text-muted-foreground py-8">No products found.</p>
                         )}
                         {filteredProducts.map(p => (
-                            <div key={p.id} className="flex items-center justify-between bg-secondary/60 rounded-lg px-3 py-2.5 group">
+                            <div key={p.id} className="flex items-center justify-between bg-secondary/60 rounded-lg px-3 py-2.5">
                                 <div className="min-w-0">
                                     <p className="text-sm font-medium truncate">{p.name}</p>
                                     <p className="text-xs text-muted-foreground">{p.brand} • {p.volume} • ETB {p.priceOut} • Stock: {p.quantity}</p>
                                 </div>
-                                <div className="flex items-center gap-1 shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={() => openEditProduct(p)}
-                                        className="p-1.5 rounded text-blue-400 hover:bg-blue-500/10"
-                                    >
-                                        <Edit2 className="h-3.5 w-3.5" />
-                                    </button>
+                                <div className="flex items-center gap-1 shrink-0 ml-2 transition-opacity">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/20 hover:text-primary" onClick={() => openEditProduct(p)}>
+                                        <Edit2 className="h-4 w-4" />
+                                    </Button>
                                     <button
                                         onClick={() => handleDeleteProduct(p.id, p.name)}
                                         className="p-1.5 rounded text-destructive hover:bg-destructive/10"
@@ -384,15 +381,12 @@ function ProductsPanel() {
                             <p className="text-center text-sm text-muted-foreground py-8">No brands found.</p>
                         )}
                         {filteredBrands.map((b: any) => (
-                            <div key={b.id} className="flex items-center justify-between bg-secondary/60 rounded-lg px-3 py-2.5 group">
+                            <div key={b.id} className="flex items-center justify-between bg-secondary/60 rounded-lg px-3 py-2.5">
                                 <p className="text-sm font-medium">{b.name}</p>
-                                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={() => openEditBrand(b)}
-                                        className="p-1.5 rounded text-blue-400 hover:bg-blue-500/10"
-                                    >
-                                        <Edit2 className="h-3.5 w-3.5" />
-                                    </button>
+                                <div className="flex items-center gap-1 shrink-0 transition-opacity">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/20 hover:text-primary" onClick={() => openEditBrand(b)}>
+                                        <Edit2 className="h-4 w-4" />
+                                    </Button>
                                     <button
                                         onClick={() => handleDeleteBrand(b.id, b.name)}
                                         className="p-1.5 rounded text-destructive hover:bg-destructive/10"
@@ -425,15 +419,12 @@ function ProductsPanel() {
                             <p className="text-center text-sm text-muted-foreground py-8">No categories found.</p>
                         )}
                         {filteredCategories.map((c: any) => (
-                            <div key={c.id} className="flex items-center justify-between bg-secondary/60 rounded-lg px-3 py-2.5 group">
+                            <div key={c.id} className="flex items-center justify-between bg-secondary/60 rounded-lg px-3 py-2.5">
                                 <p className="text-sm font-medium">{c.name}</p>
-                                <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={() => openEditCategory(c)}
-                                        className="p-1.5 rounded text-blue-400 hover:bg-blue-500/10"
-                                    >
-                                        <Edit2 className="h-3.5 w-3.5" />
-                                    </button>
+                                <div className="flex items-center gap-1 shrink-0 ml-2 transition-opacity">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary/20 hover:text-primary" onClick={() => openEditCategory(c)}>
+                                        <Edit2 className="h-4 w-4" />
+                                    </Button>
                                     <button
                                         onClick={() => handleDeleteCategory(c.id, c.name)}
                                         className="p-1.5 rounded text-destructive hover:bg-destructive/10"
