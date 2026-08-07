@@ -31,12 +31,12 @@ export function StockEntryDialog({ open, onOpenChange }: StockEntryDialogProps) 
     useEffect(() => {
         if (open) {
             setSearch("");
-            setSelectedProductId("");
+            setSelectedProductId(editProductId || "");
             setPriceIn("");
             setQuantity("");
             setDropdownOpen(false);
         }
-    }, [open]);
+    }, [open, editProductId]);
 
     // Pre-fill last known price when product selected
     useEffect(() => {
